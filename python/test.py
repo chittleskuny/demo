@@ -45,6 +45,12 @@ class DemoTest(object):
         [0] D
         '''
 
+    def test_demo_msdosser(self):
+        msdosser = DemoMsDosser()
+        tree_list = msdosser.tree('output.txt')
+        logging.info(tree_list)
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 1:
         exit(1)
