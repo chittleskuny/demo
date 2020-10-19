@@ -4,6 +4,8 @@
 import sys
 
 from logger import *
+from msdosser import *
+from stepper import *
 
 
 class DemoTest(object):
@@ -49,6 +51,21 @@ class DemoTest(object):
         msdosser = DemoMsDosser()
         tree_list = msdosser.tree('output.txt')
         logging.info(tree_list)
+
+    def test_demo_stepper(self):
+        stepper = DemoStepper()
+        steps = [
+            'step_1',
+            'step_2',
+            'step_3',
+        ]
+        stepper.append(steps)
+        stepper.next()
+        print(str(stepper))
+        stepper.next()
+        print(str(stepper))
+        stepper.next()
+        print(str(stepper))
 
 
 if __name__ == '__main__':
