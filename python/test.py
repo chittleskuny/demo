@@ -1,11 +1,14 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
+
+import os
 import sys
 
 from logger import *
 from msdosser import *
 from stepper import *
+from tracter import *
 
 
 class DemoTest(object):
@@ -50,7 +53,7 @@ class DemoTest(object):
     def test_demo_msdosser(self):
         msdosser = DemoMsDosser()
         tree_list = msdosser.tree('output.txt')
-        logging.info(tree_list)
+        print(tree_list)
 
     def test_demo_stepper(self):
         stepper = DemoStepper()
@@ -66,6 +69,17 @@ class DemoTest(object):
         print(str(stepper))
         stepper.next()
         print(str(stepper))
+
+    def test_demo_tracter(self):
+        tracter = DemoTracter()
+        os.system('''
+            mkdir -p ~/test/tracter/src;
+            echo "abc" > ~/test/tracter/src/abc.txt;
+            echo "def" > ~/test/tracter/src/def.txt;
+        ''')
+        if tracter.contract('~/test/tracter/src', '~/test/tracter/src.zip'):
+            os.system('rm -rf ~/test/tracter/src')
+            tracter.extract('~/test/tracter/src.zip', '~/test/tracter/src')
 
 
 if __name__ == '__main__':
