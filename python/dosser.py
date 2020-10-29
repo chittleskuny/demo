@@ -5,7 +5,7 @@ import re
 import os
 
 
-class DemoMsDosser(object):
+class DemoDosser(object):
     def __init__(self):
         pass
 

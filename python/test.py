@@ -5,8 +5,9 @@
 import os
 import sys
 
+from dosser import *
+from excel import *
 from logger import *
-from msdosser import *
 from stepper import *
 from tracter import *
 
@@ -19,7 +20,15 @@ class DemoTest(object):
         if hasattr(self, 'test_demo_' + case):
             getattr(self, 'test_demo_' + case)()
         else:
-            pass
+            print('No such case %s.' % case)
+
+    def test_demo_dosser(self):
+        dosser = DemoDosser()
+        tree_list = dosser.tree('output.txt')
+        print(tree_list)
+
+    def test_demo_excel(self):
+        excel = DemoExcel()
 
     def test_demo_logger(self):
         DemoLogger()
@@ -49,11 +58,6 @@ class DemoTest(object):
         [1] D
         [0] D
         '''
-
-    def test_demo_msdosser(self):
-        msdosser = DemoMsDosser()
-        tree_list = msdosser.tree('output.txt')
-        print(tree_list)
 
     def test_demo_stepper(self):
         stepper = DemoStepper()
