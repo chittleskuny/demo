@@ -28,7 +28,13 @@ class DemoTest(object):
         print(tree_list)
 
     def test_demo_excel(self):
-        excel = DemoExcel()
+        xls = DemoExcel('test.xls')
+        xls.open_worksheet('test')
+        xls.save_workbook()
+
+        xlsx = DemoExcel('test.xlsx')
+        xlsx.open_worksheet('test')
+        xlsx.save_workbook()
 
     def test_demo_logger(self):
         DemoLogger()

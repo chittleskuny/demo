@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 
+import os
 import openpyxl
 import itertools
 import xlrd, xlwt
@@ -11,22 +12,22 @@ from xlutils.copy import copy
 class DemoExcel(object):
     cell_width = 256*11
 
-    def __init__(self):
+    def __init__(self, workbook_name=None):
         self.workbook = None
-        self.name = None,
-        self.extension = '.xlsx',
         self.origin = 0
-        self.mode = 'r',
+        self.mode = 'r'
+
+        self.open_workbook(workbook_name)
 
     ### workbook ###
 
-    def new_workbook(workbook_name):
+    def new_workbook(self, workbook_name=None):
         if workbook_name.endswith('.xls'):
             self.workbook = xlwt.Workbook()
             self.extension = '.xls'
             self.origin = 1
         elif workbook_name.endswith('.xlsx'):
-            self.workbook = None
+            self.workbook = openpyxl.Workbook()
             self.extension = '.xlsx'
             self.origin = 0
         else:
@@ -35,30 +36,27 @@ class DemoExcel(object):
         self.mode = 'w'
         return self.workbook
 
-    def open_workbook(workbook_name):
-        if workbook_name.endswith('.xls'):
-            self.extension = '.xls'
-            self.workbook = xlrd.open_workbook(filename=workbook_name)
-        elif workbook_name.endswith('.xlsx'):
-            self.extension = '.xlsx'
-            self.workbook = openpyxl.load_workbook(filename=workbook_name)
+    def open_workbook(self, workbook_name=None):
+        if not workbook_name or not os.path.isfile(workbook_name):
+            self.new_workbook(workbook_name)
         else:
-            self.workbook = None
-        self.mode = 'r'
+            if workbook_name.endswith('.xls'):
+                self.workbook = xlrd.open_workbook(filename=workbook_name)
+                self.extension = '.xls'
+            elif workbook_name.endswith('.xlsx'):
+                self.workbook = openpyxl.load_workbook(filename=workbook_name)
+                self.extension = '.xlsx'
+            else:
+                pass
+            self.name = workbook_name
+            self.mode = 'r'
         return self.workbook
 
     def save_workbook(self, workbook_name=None):
         if self.mode == 'r':
             return None
         elif self.mode == 'w':
-            if not workbook_name:
-                workbook_name = self.name
-            if self.extension == '.xls':
-                self.workbook.save(workbook_name)
-            elif self.extension == '.xlsx':
-                pass
-            else:
-                pass
+            self.workbook.save(workbook_name if workbook_name else self.name)
         else:
             pass
         return self.workbook
@@ -102,7 +100,7 @@ class DemoExcel(object):
             if self.extension == '.xls':
                 worksheet = self.workbook.add_sheet(worksheet_name)
             elif self.extension == '.xlsx':
-                worksheet = None
+                worksheet = self.workbook.create_sheet(worksheet_name)
             else:
                 worksheet = None
         else:
@@ -110,6 +108,8 @@ class DemoExcel(object):
         return worksheet
 
     def open_worksheet(self, worksheet_name=None, worksheet_index=None):
+        if worksheet_name and worksheet_index:
+            return None
         if self.mode == 'r':
             if self.extension == '.xls':
                 if worksheet_name:
@@ -124,16 +124,29 @@ class DemoExcel(object):
                 worksheet = None
         elif self.mode == 'w':
             if self.extension == '.xls':
-                try:
-                    for idx in itertools.count():
-                        worksheet_temp = self.workbook.get_sheet(idx)
-                        if worksheet_temp.name == worksheet_name:
-                            worksheet = worksheet_temp
-                            break
-                except IndexError:
+                if worksheet_name:
+                    try:
+                        for idx in itertools.count():
+                            worksheet_temp = self.workbook.get_sheet(idx)
+                            if worksheet_temp.name == worksheet_name:
+                                worksheet = worksheet_temp
+                                break
+                    except IndexError:
+                        worksheet = self.new_worksheet(worksheet_name)
+                elif worksheet_index:
+                    worksheet = self.workbook.get_sheet(worksheet_index)
+                else:
                     worksheet = None
             elif self.extension == '.xlsx':
-                worksheet = None
+                if worksheet_name:
+                    if worksheet_name in self.workbook:
+                        worksheet = self.workbook[worksheet_name]
+                    else:
+                        worksheet = self.new_worksheet(worksheet_name)
+                elif worksheet_index:
+                    pass
+                else:
+                    worksheet = None
             else:
                 worksheet = None
         else:
