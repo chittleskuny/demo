@@ -9,12 +9,14 @@ class DemoStepper(object):
         self.mode = mode
 
     def __str__(self):
-        percent = 100
+        percent_unit = 100
+        percent = 0
         fraction_item = '[%d/%d]'
         fraction_list = []
         if len(self.max) > 0:
             for i in range(len(self.max)):
-                percent = percent*(self.cur[i]/self.max[i])
+                percent_unit = percent_unit/self.max[i]
+                percent = percent + (self.cur[i] - 1)*percent_unit
                 fraction_list.append(fraction_item % (self.cur[i], self.max[i]))
         step = ""
         if self.mode == 'percent':
