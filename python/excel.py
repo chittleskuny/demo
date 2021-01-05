@@ -6,11 +6,10 @@ import os
 import openpyxl
 import itertools
 import xlrd, xlwt
-from xlutils.copy import copy
 
 
 class DemoExcel(object):
-    cell_width = 256*11
+    cell_width = { 'xls': 256*11, 'xlsx': 8.38 }
 
     def __init__(self, workbook_name=None):
         self.workbook = None
@@ -244,9 +243,9 @@ class DemoExcel(object):
             return False
         elif self.mode == 'w':
             if self.extension == '.xls':
-                worksheet.col(column_index).width = int(self.cell_width*multiple)
+                worksheet.col(column_index).width = int(self.cell_width['xls']*multiple)
             elif self.extension == '.xlsx':
-                return False
+                worksheet.column_dimensions[column].width = self.cell_width['xlsx']*multiple
             else:
                 return False
         else:

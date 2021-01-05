@@ -1,18 +1,31 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
+
 class DemoStepper(object):
-    def __init__(self):
+    def __init__(self, mode='both'):
         self.max, self.cur = [], [] # number list
         self.limit_from, self.limit_to = None, None
+        self.mode = mode
 
     def __str__(self):
-        template_item = '[%d/%d]'
-        template_list = []
+        percent_unit = 100
+        percent = 0
+        fraction_item = '[%d/%d]'
+        fraction_list = []
         if len(self.max) > 0:
             for i in range(len(self.max)):
-                template_list.append(template_item % (self.cur[i], self.max[i]))
-        return ''.join(template_list) + ' '
+                percent_unit = percent_unit/self.max[i]
+                percent = percent + (self.cur[i] - 1)*percent_unit
+                fraction_list.append(fraction_item % (self.cur[i], self.max[i]))
+        step = ""
+        if self.mode == 'percent':
+            step = '[' + '%.2f' % percent + '%] '
+        elif self.mode == 'fraction':
+            step = ''.join(fraction_list) + ' '
+        else:
+            step = '[' + '%.2f' % percent + '%] ' + ''.join(fraction_list) + ' '
+        return step
 
     def append(self, steps):
         self.max.append(len(steps))
@@ -21,9 +34,9 @@ class DemoStepper(object):
 
     def limit(self, limit_from=None, limit_to=None):
         if limit_from:
-            self.limit_from = limit_from
+            self.limit_from = list(map(lambda x:int(x), limit_from))
         if limit_to:
-            self.limit_to = limit_to
+            self.limit_to = list(map(lambda x:int(x), limit_to))
         return True
 
     def check(self):
