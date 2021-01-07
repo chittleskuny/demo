@@ -42,11 +42,11 @@ class DemoStepper(object):
     def check(self):
         if self.limit_from:
             for i in range(len(self.limit_from)):
-                if self.cur[i] < self.limit_from[i]:
+                if len(self.cur) > i and self.cur[i] < self.limit_from[i]:
                     return -1
         if self.limit_to:
             for i in range(len(self.limit_to)):
-                if self.cur[i] > self.limit_to[i]:
+                if len(self.cur) > i and self.cur[i] > self.limit_to[i]:
                     return 1
         return 0
 
