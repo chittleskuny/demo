@@ -7,6 +7,7 @@ class DemoStepper(object):
         self.max, self.cur = [], [] # number list
         self.limit_from, self.limit_to = None, None
         self.mode = mode
+        self.flag = False
 
     def __str__(self):
         percent_unit = 100
@@ -18,6 +19,8 @@ class DemoStepper(object):
                 percent_unit = percent_unit/self.max[i]
                 percent = percent + (self.cur[i] - 1)*percent_unit
                 fraction_list.append(fraction_item % (self.cur[i], self.max[i]))
+        if self.flag:
+            percent = percent + percent_unit
         step = ""
         if self.mode == 'percent':
             step = '[' + '%.2f' % percent + '%] '
@@ -51,6 +54,7 @@ class DemoStepper(object):
         return 0
 
     def next(self):
+        self.flag = False
         for i in range(len(self.max) - 1, -1, -1):
             if self.cur[i] < self.max[i]:
                 self.cur[i] = self.cur[i] + 1
@@ -59,3 +63,6 @@ class DemoStepper(object):
                 self.cur.pop()
                 self.max.pop()
         return 0
+
+    def commit(self):
+        self.flag = True
