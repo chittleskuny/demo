@@ -5,6 +5,7 @@
 import os
 import sys
 
+from cat import *
 from dosser import *
 from excel import *
 from logger import *
@@ -21,6 +22,10 @@ class DemoTest(object):
             getattr(self, 'test_demo_' + case)()
         else:
             print('No such case %s.' % case)
+
+    def test_demo_cat(self):
+        cat = DemoCat(True)
+        cat._tail('cat.py')
 
     def test_demo_dosser(self):
         dosser = DemoDosser()
