@@ -1,8 +1,8 @@
-function at()
+local function at()
 end
 
 
-function cron()
+local function cron()
 end
 
 
@@ -303,9 +303,9 @@ local function match_day_of_trade(pattern, case)
 end
 
 
-function match_std(pattern, case)
+local function match_std(pattern, case)
     local pattern = format_pattern(pattern)
-    if not patterns or not case then
+    if not pattern or not case then
         return false
     end
     if match_second(pattern, case)
@@ -316,7 +316,7 @@ function match_std(pattern, case)
             and match_month(pattern, case)
             and match_day_of_week(pattern, case)
             and match_year(pattern, case)
-            and match_day_of_trade(pattern, case)
+            and match_day_of_trade(pattern, case) then
         return true
     end
     return false
@@ -342,7 +342,7 @@ end
 --     },
 --     ...
 -- }
-function match_ext(patterns, case)
+local function match_ext(patterns, case)
     local case = format_case(case)
     for i_pattern, v_pattern in ipairs(patterns) do
         if match_std(v_pattern, case) then
