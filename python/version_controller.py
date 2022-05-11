@@ -28,6 +28,8 @@ PG_PASSWORD = 'postgres'
 valid_opts = {
     'force': False,
     'name': '',
+    'detal_index': -1,
+    'git_to_svn': False,
     'svn_remote': '',
     'svn_username': '',
     'svn_password': '',
@@ -44,12 +46,27 @@ type_names = {
 }
 
 
+# CUSTOM
+def calc_new_pg_version(old_pg_version, old_git_revision, old_svn_revision, new_git_revision, new_svn_revision):
+    if old_pg_version is None:
+        old_pg_version = [0, 0, 0, 0]
+
+    new_pg_version = []
+    for i in range(len(old_pg_version)):
+        new_pg_version.append(old_pg_version[i] + VERSION_DELTA[i])
+    return new_pg_version
+
+
 def get_opts_and_args(argv):
     try:
         opts, args = getopt.getopt(argv, '', [
             'help',
+
             'force',
             'name=',
+            'detal_index='
+            
+            'git_to_svn',
             'svn_remote=',
             'svn_username=',
             'svn_password=',
@@ -64,18 +81,25 @@ def get_opts_and_args(argv):
         if opt in ('--help'):
             logging.info('?')
             exit(0)
+        
         elif opt in ('--force'):
             valid_opts['force'] = True
         elif opt in ('--name'):
             valid_opts['name'] = arg
+            valid_opts['table'] = arg
             valid_opts['file'] = os.path.join(arg, 'Properties', 'AssemblyInfo.cs')
-            valid_opts['table'] = arg.lower()
+        elif opt in ('--delta_index'):
+            VERSION_DELTA[int(arg)] = 1
+        
+        elif opt in ('--git_to_svn'):
+            valid_opts['git_to_svn'] = True
         elif opt in ('--svn_remote'):
             valid_opts['svn_remote'] = arg
         elif opt in ('--svn_username'):
             valid_opts['svn_username'] = arg
         elif opt in ('--svn_password'):
             valid_opts['svn_password'] = arg
+        
         else:
             logging.warning('unknown opt: %s.' % opt)
     
@@ -113,10 +137,18 @@ class DemoVersionController(object):
         return rows
 
 
-    def get_pg_version(self, conn):
-        sql = '''SELECT version, git_revision, svn_revision FROM public.%s ORDER BY version DESC LIMIT 1;'''
-        sql = sql % valid_opts['table']
-        rows = self.exe_sql(conn.cursor(), sql)
+    def connect_pg(self, host, database, user, password):
+        self.conn = psycopg2.connect(host, database, user, password)
+
+
+    def disconnect_pg(self):
+        self.conn.close()
+
+
+    def get_pg_version(self, table):
+        sql = '''SELECT version, git_revision, svn_revision FROM public."%s" ORDER BY version DESC LIMIT 1;'''
+        sql = sql % table
+        rows = self.exe_sql(self.conn.cursor(), sql)
 
         row = rows[0]
         if row is not None:
@@ -127,6 +159,11 @@ class DemoVersionController(object):
         logging.info('pg_version: %s' % pg_version)
         logging.info('pg_git_revision: %s' % pg_git_revision)
         logging.info('pg_svn_revision: %s' % pg_svn_revision)
+
+        self.old_pg_version = pg_version
+        self.old_pg_git_revision = pg_git_revision
+        self.old_pg_svn_revision = pg_svn_revision
+
         return (pg_version, pg_git_revision, pg_svn_revision)
 
 
@@ -134,16 +171,6 @@ class DemoVersionController(object):
         git_revision = git_local_repo.head.commit.hexsha
         logging.info('git_revision: %s' % git_revision)
         return git_revision
-
-
-    def calc_new_pg_version(self, old_pg_version):
-        if old_pg_version is None:
-            old_pg_version = [0, 0, 0, 0]
-
-        new_pg_version = []
-        for i in range(len(old_pg_version)):
-            new_pg_version.append(old_pg_version[i] + VERSION_DELTA[i])
-        return new_pg_version
 
 
     def get_git_not_ignored_paths(self, git_local_repo, path='.'):
@@ -245,13 +272,6 @@ class DemoVersionController(object):
         return svn_revision
 
 
-    def set_pg_version(self, conn, pg_version, git_revision, svn_revision):
-        sql = '''INSERT INTO public.%s (version, git_revision, svn_revision) VALUES (array%s, '%s', %d);'''
-        sql = sql % (valid_opts['table'], pg_version, git_revision, svn_revision)
-        self.exe_sql(conn.cursor(), sql)
-        conn.commit()
-
-
     def set_properties_assemblyinfo(self, filename, new_version):
         content = ''
 
@@ -265,41 +285,63 @@ class DemoVersionController(object):
             wf.write(content)
 
 
-    def run(self):
-        conn = psycopg2.connect(host=PG_HOST, database=PG_DATABASE, user=PG_USER, password=PG_PASSWORD)
+    def set_pg_version(self, pg_version, git_revision, svn_revision):
+        sql = '''INSERT INTO public."%s" (version, git_revision, svn_revision) VALUES (array%s, '%s', %d);'''
+        sql = sql % (valid_opts['table'], pg_version, git_revision, svn_revision)
+        self.exe_sql(self.conn.cursor(), sql)
+        self.conn.commit()
 
-        (pg_version, pg_git_revision, pg_svn_revision) = self.get_pg_version(conn)
+
+    def run(self, force, table, file, git_to_svn, svn_remote, svn_username, svn_password, calc_new_pg_version):
+        (old_pg_version, old_git_revision, old_svn_revision) = self.get_pg_version(table)
 
         git_local_repo = git.Repo('.')
-        git_revision = self.get_git_revision(git_local_repo)
-        logging.info('git_revision: %s' % git_revision)
+        new_git_revision = self.get_git_revision(git_local_repo)
+        logging.info('git_revision: %s' % new_git_revision)
 
         cmd = 'git stash clear'
         self.exe_cmd(cmd)
 
-        cmd = 'git reset --hard %s' % git_revision
+        cmd = 'git reset --hard %s' % new_git_revision
         self.exe_cmd(cmd)
 
-        if not os.path.exists('.svn'):
+        if git_to_svn and not os.path.exists('.svn'):
             cmd = 'svn checkout %s . --force --depth=infinity --username=%s --password=%s'
-            cmd = cmd % (valid_opts['svn_remote'], valid_opts['svn_username'], valid_opts['svn_password'])
+            cmd = cmd % (svn_remote, svn_username, svn_password)
             self.exe_cmd(cmd)
-        svn_local_repo = svn.local.LocalClient('.', username=valid_opts['svn_username'], password=valid_opts['svn_password'])
+        svn_local_repo = svn.local.LocalClient('.', username=svn_username, password=svn_password)
 
-        if valid_opts['force'] or pg_git_revision != git_revision:
-            new_pg_version = self.calc_new_pg_version(pg_version)
-            new_svn_revision = self.git_to_svn(git_local_repo, pg_git_revision, svn_local_repo, pg_svn_revision)
-            new_pg_version[-1] = new_svn_revision
-            self.set_pg_version(conn, new_pg_version, git_revision, new_svn_revision)
-            self.set_properties_assemblyinfo(valid_opts['file'], new_pg_version)
+        (new_pg_version, new_git_revision, new_svn_revision) = (None, None, None)
+        if force or old_git_revision != new_git_revision:
+            new_svn_revision = self.git_to_svn(git_local_repo, old_git_revision, svn_local_repo, old_svn_revision)
+            new_pg_version = calc_new_pg_version(old_pg_version, old_git_revision, old_svn_revision, new_git_revision, new_svn_revision)
+            self.set_properties_assemblyinfo(file, new_pg_version)
         else:
-            self.set_properties_assemblyinfo(valid_opts['file'], pg_version)
+            self.set_properties_assemblyinfo(file, old_pg_version)
 
-        conn.close()
+        return (new_pg_version, new_git_revision, new_svn_revision)
 
 
 if __name__ == '__main__':
     logger = DemoLogger(file=False)
+
     get_opts_and_args(sys.argv[1:])
     version_controlller = DemoVersionController()
-    version_controlller.run()
+    version_controlller.connect_pg(PG_HOST, PG_DATABASE, PG_USER, PG_PASSWORD)
+    (new_pg_version, new_git_revision, new_svn_revision) = version_controlller.run(
+        valid_opts['force'],
+        valid_opts['table'],
+        valid_opts['file'],
+        valid_opts['git_to_svn'],
+        valid_opts['svn_remote'],
+        valid_opts['svn_username'],
+        valid_opts['svn_password'],
+    )
+    version_controlller.disconnect_pg()
+
+    '''
+    version_controlller = DemoVersionController()
+    version_controlller.connect_pg(PG_HOST, PG_DATABASE, PG_USER, PG_PASSWORD)
+    version_controlller.set_pg_version(new_pg_version, new_git_revision, new_svn_revision)
+    version_controlller.disconnect_pg()
+    '''
