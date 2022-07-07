@@ -8,6 +8,7 @@ import sys
 import getopt
 import pathlib
 import logging
+import shutil
 import psycopg2
 import subprocess
 import svn.remote, svn.local
@@ -25,7 +26,7 @@ PG_PASSWORD = 'postgres'
 # default
 properties = {
     'Configuration': 'Release',
-    'Platform': 'Any CPU',
+    'Platform': 'AnyCPU',
 }
 
 valid_opts = {
@@ -33,6 +34,7 @@ valid_opts = {
     'properties': properties,
     'start_index': 3,
     'delta_index': -1,
+    'root_directory': '.',
     'git_to_svn': False,
     'force': False,
     'svn_remote': None,
@@ -59,6 +61,7 @@ def get_opts_and_args(argv):
             'name=',
             'start_index=',
             'delta_index=',
+            'root_directory='
             'git_to_svn',
             'force',
             'svn_remote=',
@@ -80,6 +83,8 @@ def get_opts_and_args(argv):
             valid_opts['start_index'] = int(arg)
         elif opt in ('--delta_index'):
             valid_opts['delta_index'] = int(arg)
+        elif opt in ('--root_directory'):
+            valid_opts['root_directory'] = arg
         elif opt in ('--git_to_svn'):
             valid_opts['git_to_svn'] = True
         elif opt in ('--force'):
@@ -98,6 +103,7 @@ def get_opts_and_args(argv):
     logging.info('name: %s' % valid_opts['name'])
     logging.info('start_index: %s' % valid_opts['start_index'])
     logging.info('delta_index: %s' % valid_opts['delta_index'])
+    logging.info('root_directory: %s' % valid_opts['root_directory'])
     logging.info('git_to_svn: %s' % valid_opts['git_to_svn'])
     logging.info('force: %s' % valid_opts['force'])
     logging.info('svn_remote: %s' % valid_opts['svn_remote'])
@@ -110,7 +116,18 @@ def get_opts_and_args(argv):
 
 
 class DemoVersionController(object):
-    def __init__(self, name, start_index, delta_index, git_to_svn, force=False, svn_remote=None, svn_username=None, svn_password=None, pg_version=None):
+    def __init__(
+            self,
+            name,
+            start_index,
+            delta_index,
+            git_to_svn=False,
+            force=False,
+            svn_remote=None,
+            svn_username=None,
+            svn_password=None,
+            pg_version=None
+        ):
         self.name = name
 
         self.start_version = [
@@ -288,49 +305,57 @@ class DemoVersionController(object):
         if result[1:-1] != 'No local changes to save':
             git_stash_flag = True
 
-        cmd = 'svn status'
-        result = self.exe_cmd(cmd)
+        try:
 
-        status = result[1:-1].split('\n')
+            cmd = 'svn status'
+            result = self.exe_cmd(cmd)
 
-        for item in status:
-            type_name = type_names[item[0]]
-            path = os.path.join('.', item[8:])
-            logging.info('%s: %s' % (type_name, path))
+            status = result[1:-1].split('\n')
 
-            if path in git_not_ignored_paths:
-                logging.info('path %s in git_not_ignored_paths' % path)
+            for item in status:
+                type_name = type_names[item[0]]
+                path = os.path.join('.', item[8:])
+                logging.info('%s: %s' % (type_name, path))
 
-                if type_name == 'unversioned':
-                    self.svn_local_repo.add(path)
-                    if os.path.isdir(path):
+                if path in git_not_ignored_paths:
+                    logging.info('path %s in git_not_ignored_paths' % path)
 
-                        if not os.path.exists(path):
-                            logging.info('mkdir %s' % path)
-                            os.mkdir(path)
+                    if type_name == 'unversioned':
+                        self.svn_local_repo.add(path)
+                        if os.path.isdir(path):
 
-                        subpaths = self.get_git_not_ignored_paths(path=path)
-                        for subpath in subpaths:
-                            try:
-                                self.svn_local_repo.add(subpath)
-                            except Exception as e:
-                                logging.warning(e)
+                            if not os.path.exists(path):
+                                logging.info('mkdir %s' % path)
+                                os.mkdir(path)
 
-                elif type_name == 'missing':
-                    cmd = 'svn delete %s' % path
-                    self.exe_cmd(cmd)
+                            subpaths = self.get_git_not_ignored_paths(path=path)
+                            for subpath in subpaths:
+                                try:
+                                    self.svn_local_repo.add(subpath)
+                                except Exception as e:
+                                    logging.warning(e)
 
-                else:
-                    pass
+                    elif type_name == 'missing':
+                        cmd = 'svn delete %s' % path
+                        self.exe_cmd(cmd)
 
-        git_msgs = self.get_git_msgs(old_git_revision)
-        svn_msgs = '\n'.join(git_msgs)
-        logging.info('\n' + svn_msgs)
-        self.svn_local_repo.commit(svn_msgs)
+                    else:
+                        pass
 
-        if git_stash_flag:
-            cmd = 'git stash pop'
-            self.exe_cmd(cmd)
+            git_msgs = self.get_git_msgs(old_git_revision)
+            svn_msgs = '\n'.join(git_msgs)
+            logging.info('\n' + svn_msgs)
+            self.svn_local_repo.commit(svn_msgs)
+
+        except:
+
+            logging.error('git to svn commit failed.')
+
+        finally:
+
+            if git_stash_flag:
+                cmd = 'git stash pop'
+                self.exe_cmd(cmd)
 
         self.svn_local_repo.update()
         new_svn_revision = self.svn_local_repo.info()['commit_revision']
@@ -418,9 +443,6 @@ class DemoVersionController(object):
     def run_before_build(self):
         (old_pg_version, old_git_revision, old_svn_revision) = self.get_pg_version()
 
-        cmd = 'git stash clear'
-        self.exe_cmd(cmd)
-
         new_git_revision = self.get_git_revision()
 
         new_svn_revision = old_svn_revision
@@ -466,6 +488,9 @@ if __name__ == '__main__':
     logger = Logger.DemoLogger(file=False)
 
     get_opts_and_args(sys.argv[1:])
+
+    logging.info('cd %s' % valid_opts['root_directory'])
+    os.chdir(valid_opts['root_directory'])
 
     version_controlller = DemoVersionController(
         valid_opts['name'],
