@@ -6,6 +6,7 @@ import os
 import sys
 
 from cat import *
+from database_administrator import *
 from dosser import *
 from excel import *
 from logger import *
@@ -17,20 +18,24 @@ class DemoTest(object):
     def __init__(self):
         pass
 
+
     def test(self, case):
         if hasattr(self, 'test_demo_' + case):
             getattr(self, 'test_demo_' + case)()
         else:
             print('No such case %s.' % case)
 
+
     def test_demo_cat(self):
         cat = DemoCat(True)
         cat._tail('cat.py')
+
 
     def test_demo_dosser(self):
         dosser = DemoDosser()
         tree_list = dosser.tree('output.txt')
         print(tree_list)
+
 
     def test_demo_excel(self):
         xls = DemoExcel('test.xls')
@@ -41,6 +46,7 @@ class DemoTest(object):
         xlsx.open_worksheet('test')
         xlsx.save_workbook()
 
+
     def test_demo_logger(self):
         DemoLogger()
         logging.debug('A')
@@ -48,6 +54,7 @@ class DemoTest(object):
         '''
         A
         '''
+
 
     def test_demo_logger_tree(self):
         DemoLoggerTree()
@@ -69,6 +76,7 @@ class DemoTest(object):
         [1] D
         [0] D
         '''
+
 
     def test_demo_stepper(self):
         stepper = DemoStepper()
