@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
-
-from django.forms import PasswordInput
+import os
+import sys
+import configparser
 
 
 class DemoDataBaseAdministrator(object):
@@ -11,25 +12,77 @@ class DemoDataBaseAdministrator(object):
         self.connection = None
 
 
-    def connect(self, host='localhost', port=None, user='yourusername', password='yourpassword', database='databasename'):
-        if self.brand == 'sqlite':
-            import sqlite3
-            self.connection = sqlite3.connect(database)
-        elif self.brand == 'mysql':
-            import mysql.connector # pip install mysql-connector
-            if port is None:
-                port = 3306
-            self.connection = mysql.connector.connect(host=host, port=port, user=user, passwd=password, auth_plugin='mysql_native_password')
-            print(self.connection)
-        else:
-            self.connection = None
+    def connect(self, config, service):
+        cp = configparser.ConfigParser()
 
-        if self.connection:
-            print('Success.')
-            return True
-        else:
+        if not os.path.isfile(config):
+            return False
+
+        cp.read(config)
+        if service not in cp:
+            return False
+
+        if not hasattr(self, 'connect_' + self.brand):
+            return False
+
+        function = getattr(self, 'connect_' + self.brand)
+        self.connection = function(cp[service])
+        if not self.connection:
             print('Failure.')
             return False
+
+        print('Success.')
+        return True
+
+
+    def connect_sqlite(self, items):
+        import sqlite3
+
+        if 'database' not in items:
+            return None
+        else:
+            database = items['database']
+
+        return sqlite3.connect(database)
+
+
+    def connect_mysql(self, items):
+        # pip install mysql-connector
+        import mysql.connector
+        
+        host = None
+        if 'host' not in items:
+            return None
+        else:
+            host = items['host']
+
+        port = 3306
+        if 'port' in items:
+            port = items['port']
+
+        user = 'root'
+        if 'user' in items:
+            user = items['user']
+        
+        if 'password' not in items:
+            return None
+        else:
+            password = items['password']
+        
+        if 'database' not in items:
+            return None
+        else:
+            database = items['database']
+
+        return mysql.connector.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database,
+            auth_plugin='mysql_native_password'
+        )
+
 
     def disconnect(self):
         return self.connection.close()
@@ -80,8 +133,15 @@ class DemoDataBaseAdministrator(object):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        exit(1)
+    
+    config = sys.argv[1]
+    service = sys.argv[2]
+
     dba = DemoDataBaseAdministrator('mysql')
-    if dba.connect(user='root', password='******', database='world'):
-        cursor =dba.open_cursor()
+    if dba.connect(config, service):
+        cursor = dba.open_cursor()
         dba.execute(cursor, 'SHOW TABLES;')
+        print(dba.fetchall(cursor))
         dba.disconnect()
