@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
+import configparser
+import logging
 import os
 import sys
-import configparser
 
 
 class DemoDataBaseAdministrator(object):
@@ -50,10 +51,8 @@ class DemoDataBaseAdministrator(object):
         # pip install mysql-connector
         import mysql.connector
         
-        host = None
-        if 'host' not in items:
-            return None
-        else:
+        host = 'localhost'
+        if 'host' in items:
             host = items['host']
 
         port = 3306
@@ -84,6 +83,40 @@ class DemoDataBaseAdministrator(object):
         )
 
 
+    def connect_postgresql(self, items):
+        import psycopg2
+
+        host = 'localhost'
+        if 'host' in items:
+            host = items['host']
+
+        port = 5432
+        if 'port' in items:
+            port = items['port']
+
+        user = 'root'
+        if 'user' in items:
+            user = items['user']
+        
+        if 'password' not in items:
+            return None
+        else:
+            password = items['password']
+        
+        if 'database' not in items:
+            return None
+        else:
+            database = items['database']
+
+        return psycopg2.connect(
+            host = host,
+            port = port,
+            user = user,
+            password = password,
+            database = database,
+        )
+
+
     def disconnect(self):
         return self.connection.close()
 
@@ -97,7 +130,9 @@ class DemoDataBaseAdministrator(object):
 
 
     def execute(self, cursor, sql):
-        return cursor.execute(sql)
+        sql = sql.replace('    ', '')
+        logging.info(sql)
+        return cursor.execute()
 
 
     def fetchall(self, cursor):
@@ -116,7 +151,16 @@ class DemoDataBaseAdministrator(object):
         if self.brand == 'sqlite':
             rows = None
         elif self.brand == 'mysql':
-            cursor.execute('SELECT table_name FROM information_schema.tables WHERE table_schema=\'' + table_schema + '\';')
+            sql = '''
+                'SELECT table_name FROM information_schema.tables WHERE table_schema=\'%s\';'
+            ''' % table_schema
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+        elif self.brand == 'postgresql':
+            sql = '''
+                SELECT table_name FROM pg_tables;
+            '''
+            cursor.execute(sql)
             rows = cursor.fetchall()
         else:
             rows = None
@@ -133,15 +177,20 @@ class DemoDataBaseAdministrator(object):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         exit(1)
     
-    config = sys.argv[1]
-    service = sys.argv[2]
+    brand = sys.argv[1]
+    config = sys.argv[2]
+    service = sys.argv[3]
 
-    dba = DemoDataBaseAdministrator('mysql')
-    if dba.connect(config, service):
-        cursor = dba.open_cursor()
-        dba.execute(cursor, 'SHOW TABLES;')
-        print(dba.fetchall(cursor))
-        dba.disconnect()
+    dba = DemoDataBaseAdministrator(brand)
+
+    if not dba.connect(config, service):
+        exit(1)
+
+    cursor = dba.open_cursor()
+    dba.execute(cursor, 'SHOW TABLES;')
+    print(dba.fetchall(cursor))
+    
+    dba.disconnect()
