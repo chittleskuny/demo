@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
-import os
-import git
-import sys
 import configparser
+import git
+import os
+import sys
+
 
 class DemoGitter():
     def __init__(self, folders_txt):
@@ -15,12 +16,14 @@ class DemoGitter():
         if self.folders:
             self.get_repos()
 
+
     def get_folders(self, folders_txt):
         with open(folders_txt) as f:
             lines = f.readlines()
             for line in lines:
                 folder = line.strip()
                 self.folders.append(folder)
+
 
     def get_repos(self):
         for folder in self.folders:
@@ -33,10 +36,10 @@ class DemoGitter():
 
                     root_dir_git = os.path.join(root_dir, '.git')
                     if os.path.exists(root_dir_git):
-                        # print(root_dir_git)
                         self.repos.append(root_dir)
 
         self.repos.sort()
+
 
     def get_status(self):
         for repo in self.repos:
@@ -71,8 +74,10 @@ class DemoGitter():
 
 
 if __name__ == '__main__':
-    folders = 'folders.txt'
-    if len(sys.argv) > 1:
-        folders = sys.argv[1]
+    if len(sys.argv) <= 1:
+        exit(1)
+    
+    folders = sys.argv[1]
+
     gitter = DemoGitter(folders)
     gitter.get_status()

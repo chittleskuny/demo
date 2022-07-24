@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
+import logging
 import os
 import time
-import logging
 
 
 class DemoLogger(object):
@@ -81,3 +81,12 @@ class DemoLoggerTree(object):
         fh.setFormatter(logging.Formatter(format))
         fh.setLevel(logging.DEBUG)
         logger.addHandler(fh)
+
+
+if __name__ == '__main__':
+    logger = DemoLogger(file=False)
+
+    logging.debug('debug message.')
+    logging.info('info message.')
+    logging.warning('warning message.')
+    logging.error('error message.')

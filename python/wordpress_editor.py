@@ -4,8 +4,8 @@
 import os
 import sys
 
-from database_administrator import *
-from logger import *
+from .database_administrator import *
+from .logger import *
 
 
 class DemoWordPressEditor(object):
@@ -33,7 +33,7 @@ class DemoWordPressEditor(object):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
+    if len(sys.argv) <= 3:
         exit(1)
 
     root = sys.argv[1]
