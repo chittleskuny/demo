@@ -1,27 +1,22 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
-import os
-import re
-import git
-import sys
 import getopt
-import pathlib
+import git
 import logging
-import shutil
+import os
+import pathlib
 import psycopg2
+import re
+import shutil
 import subprocess
 import svn.remote, svn.local
+import sys
 
+from .database_administrator import *
+from .dosser import *
 from .logger import *
 
-
-GIT_BRANCH = 'master'
-
-PG_HOST = '192.168.1.127'
-PG_DATABASE = 'version_control'
-PG_USER = 'postgres'
-PG_PASSWORD = 'postgres'
 
 # default
 properties = {
@@ -30,11 +25,15 @@ properties = {
 }
 
 valid_opts = {
+    'config': None,
+    'service': None,
+    'root_directory': '.',
     'name': None,
+    'mini_releases': None,
     'properties': properties,
     'start_index': 3,
     'delta_index': -1,
-    'root_directory': '.',
+    'git_branch': 'master',
     'git_to_svn': False,
     'force': False,
     'svn_remote': None,
@@ -58,10 +57,14 @@ def get_opts_and_args(argv):
     try:
         opts, args = getopt.getopt(argv, '', [
             'help',
+            'config=',
+            'service=',
+            'root_directory='
             'name=',
+            'mini_releases=',
             'start_index=',
             'delta_index=',
-            'root_directory='
+            'git_branch=',
             'git_to_svn',
             'force',
             'svn_remote=',
@@ -77,14 +80,22 @@ def get_opts_and_args(argv):
         if opt in ('--help'):
             logging.info('?')
             exit(0)
+        elif opt in ('--config'):
+            valid_opts['config'] = arg
+        elif opt in ('--service'):
+            valid_opts['service'] = arg
+        elif opt in ('--root_directory'):
+            valid_opts['root_directory'] = arg
         elif opt in ('--name'):
             valid_opts['name'] = arg
+        elif opt in ('--mini_releases'):
+            valid_opts['mini_releases'] = arg
         elif opt in ('--start_index'):
             valid_opts['start_index'] = int(arg)
         elif opt in ('--delta_index'):
             valid_opts['delta_index'] = int(arg)
-        elif opt in ('--root_directory'):
-            valid_opts['root_directory'] = arg
+        elif opt in ('--git_branch'):
+            valid_opts['git_branch'] = arg
         elif opt in ('--git_to_svn'):
             valid_opts['git_to_svn'] = True
         elif opt in ('--force'):
@@ -100,10 +111,14 @@ def get_opts_and_args(argv):
         else:
             logging.warning('unknown opt: %s.' % opt)
     
+    logging.info('config: %s' % valid_opts['config'])
+    logging.info('service: %s' % valid_opts['service'])
+    logging.info('root_directory: %s' % valid_opts['root_directory'])
     logging.info('name: %s' % valid_opts['name'])
+    logging.info('mini_releases: %s' % valid_opts['mini_releases'])
     logging.info('start_index: %s' % valid_opts['start_index'])
     logging.info('delta_index: %s' % valid_opts['delta_index'])
-    logging.info('root_directory: %s' % valid_opts['root_directory'])
+    logging.info('git_branch: %s' % valid_opts['git_branch'])
     logging.info('git_to_svn: %s' % valid_opts['git_to_svn'])
     logging.info('force: %s' % valid_opts['force'])
     logging.info('svn_remote: %s' % valid_opts['svn_remote'])
@@ -119,8 +134,10 @@ class DemoVersionController(object):
     def __init__(
             self,
             name,
+            mini_releases,
             start_index,
             delta_index,
+            git_branch='master',
             git_to_svn=False,
             force=False,
             svn_remote=None,
@@ -144,9 +161,10 @@ class DemoVersionController(object):
         ][delta_index]
 
         self.git_local_repo = git.Repo('.')
-        self.svn_local_repo = None
+        self.git_branch = git_branch
 
         self.git_to_svn = git_to_svn
+        self.svn_local_repo = None
         self.force = force
 
         if self.git_to_svn:
@@ -154,7 +172,7 @@ class DemoVersionController(object):
             if not os.path.exists('.svn'):
                 cmd = 'svn checkout %s . --force --depth=infinity --username=%s --password=%s'
                 cmd = cmd % (svn_remote, svn_username, svn_password)
-                self.exe_cmd(cmd)
+                Dosser.exe(cmd)
             
             self.svn_local_repo = svn.local.LocalClient('.', username=svn_username, password=svn_password)
 
@@ -164,40 +182,22 @@ class DemoVersionController(object):
             self.force = False
 
 
-    def exe_cmd(self, cmd):
-        logging.info(cmd)
-        try:
-            output = subprocess.check_output(cmd, shell=True)
-        except:
-            logging.error('Failure: %s' % cmd)
-            exit(-1)
+    def exe_sql(self, sql):
+        cur = self.conn.cursor()
 
-        try:
-            result = '\n' + output.decode('gbk').replace('\r\n', '\n')
-        except:
-            result = '\n' + output.decode('utf-8')
-        logging.info(result)
-        return result
-
-
-    def exe_sql(self, cur, sql):
         logging.info(sql)
         cur.execute(sql)
         try:
             rows = cur.fetchall()
         except:
             rows = None
+
         cur.close()
         return rows
 
 
-    def connect_pg(self, host, database, user, password):
-        self.conn = psycopg2.connect(
-            host = host,
-            database = database,
-            user = user,
-            password = password,
-        )
+    def connect_pg(self, connection):
+        self.conn = connection
 
 
     def disconnect_pg(self):
@@ -210,7 +210,7 @@ class DemoVersionController(object):
         if not self.git_to_svn:
             sql = '''SELECT version, git_revision FROM public."%s" ORDER BY version DESC LIMIT 1;'''
             sql = sql % self.name
-            rows = self.exe_sql(self.conn.cursor(), sql)
+            rows = self.exe_sql(sql)
 
             if not rows:
                 pg_version = None
@@ -220,7 +220,7 @@ class DemoVersionController(object):
         else:
             sql = '''SELECT version, git_revision, svn_revision FROM public."%s" ORDER BY version DESC LIMIT 1;'''
             sql = sql % self.name
-            rows = self.exe_sql(self.conn.cursor(), sql)
+            rows = self.exe_sql(sql)
 
             if not rows:
                 pg_version = None
@@ -243,14 +243,14 @@ class DemoVersionController(object):
                 SELECT git_revision FROM public."%s" WHERE version = array%s
             '''.replace('    ', '')
             sql = sql % (self.name, self.pg_version)
-            rows = self.exe_sql(self.conn.cursor(), sql)
+            rows = self.exe_sql(sql)
             if rows is None:
                 exit(-1)
 
             git_revision = rows[0][0]
             cmd = 'git reset --hard ' + git_revision
 
-        self.exe_cmd(cmd)
+        Dosser.exe(cmd)
 
         git_revision = self.git_local_repo.head.commit.hexsha
         logging.info('git_revision: %s' % git_revision)
@@ -301,14 +301,14 @@ class DemoVersionController(object):
 
         git_stash_flag = False
         cmd = 'git stash --include-untracked'
-        result = self.exe_cmd(cmd)
+        result = Dosser.exe(cmd)
         if result[1:-1] != 'No local changes to save':
             git_stash_flag = True
 
         try:
 
             cmd = 'svn status'
-            result = self.exe_cmd(cmd)
+            result = Dosser.exe(cmd)
 
             status = result[1:-1].split('\n')
 
@@ -337,7 +337,7 @@ class DemoVersionController(object):
 
                     elif type_name == 'missing':
                         cmd = 'svn delete %s' % path
-                        self.exe_cmd(cmd)
+                        Dosser.exe(cmd)
 
                     else:
                         pass
@@ -355,7 +355,7 @@ class DemoVersionController(object):
 
             if git_stash_flag:
                 cmd = 'git stash pop'
-                self.exe_cmd(cmd)
+                Dosser.exe(cmd)
 
         self.svn_local_repo.update()
         new_svn_revision = self.svn_local_repo.info()['commit_revision']
@@ -402,7 +402,7 @@ class DemoVersionController(object):
                 ON CONFLICT(version) DO UPDATE SET git_revision = '%s', svn_revision = %d;
             '''.replace('    ', '')
             sql = sql % (self.name, pg_version_str, git_revision, svn_revision, git_revision, svn_revision)
-        self.exe_sql(self.conn.cursor(), sql)
+        self.exe_sql(sql)
         self.conn.commit()
 
 
@@ -440,7 +440,51 @@ class DemoVersionController(object):
         self.run_after_build(new_pg_version_str, new_git_revision, new_svn_revision)
 
 
+    def nuget(self):
+        cmd = 'nuget.exe restore'
+        Dosser.exe(cmd)
+
+        lib = os.path.join(self.name, 'lib')
+
+        sql = '''
+            WITH RECURSIVE r AS (
+                SELECT %d AS package_id
+                UNION
+                SELECT dp.dependent_package_id AS package_id FROM r JOIN dependent_packages AS dp USING(package_id) WHERE r.package_id = dp.package_id
+            )
+            SELECT p.name FROM r JOIN packages AS p ON r.package_id = p.id WHERE p.id != %d;
+        ''' % (self.package_id, self.package_id)
+        package_rows = self.exe_sql(sql)
+
+        for package_row in package_rows:
+            package = package_row[0]
+
+            # get the max version of package
+            sql = '''SELECT MAX(version) FROM public."%s";''' % package
+            max_version_rows = self.exe_sql(sql)
+            if not max_version_rows:
+                logging.error('Version of %s not found.' % package)
+                exit(1)
+            max_version = '.'.join(str(number) for number in max_version_rows[0][0])
+
+            filename = '%s-%s' % (package, max_version)
+            filename += '.zip'
+            path_file = '%s/%s/%s' % (self.mini_releases, package, filename)
+            if not Dosser.scp_test(path_file):
+                logging.error('No such file: %s' % path_file)
+                exit(1)
+
+            Dosser.scp(path_file, lib)
+
+
     def run_before_build(self):
+        self.package_id = None
+        sql = '''SELECT id FROM public.packages WHERE name = '%s';''' % self.name
+        package_id_rows = self.exe_sql(sql)
+        if package_id_rows:
+            self.package_id = package_id_rows[0][0]
+        logging.info('package_id: %s' % self.package_id)
+
         (old_pg_version, old_git_revision, old_svn_revision) = self.get_pg_version()
 
         new_git_revision = self.get_git_revision()
@@ -455,8 +499,7 @@ class DemoVersionController(object):
         new_pg_version_str = '.'.join([str(i) for i in new_pg_version])
         self.set_properties_assembly_info(new_pg_version_str)
 
-        cmd = 'nuget.exe restore'
-        self.exe_cmd(cmd)
+        self.nuget()
 
         bin = os.path.join(self.name, 'bin')
         if os.path.exists(bin):
@@ -474,7 +517,7 @@ class DemoVersionController(object):
 
         cmd = '%smsbuild.exe %s %s\%s.csproj'
         cmd = cmd % (msbuildpath, properties_str, self.name, self.name)
-        self.exe_cmd(cmd)
+        Dosser.exe(cmd)
 
 
     def run_after_build(self, new_pg_version_str, new_git_revision, new_svn_revision):
@@ -492,10 +535,16 @@ if __name__ == '__main__':
     logging.info('cd %s' % valid_opts['root_directory'])
     os.chdir(valid_opts['root_directory'])
 
+    dba = DemoDataBaseAdministrator('postgresql')
+    if not dba.connect(config, service):
+        exit(1)
+
     version_controlller = DemoVersionController(
         valid_opts['name'],
+        valid_opts['mini_releases'],
         valid_opts['start_index'],
         valid_opts['delta_index'],
+        valid_opts['git_branch'],
         valid_opts['git_to_svn'],
         valid_opts['force'],
         valid_opts['svn_remote'],
@@ -504,6 +553,6 @@ if __name__ == '__main__':
         valid_opts['pg_version'],
     )
 
-    version_controlller.connect_pg(PG_HOST, PG_DATABASE, PG_USER, PG_PASSWORD)
+    version_controlller.connect_pg(dba.connection)
     version_controlller.run(valid_opts['properties'])
     version_controlller.disconnect_pg()
