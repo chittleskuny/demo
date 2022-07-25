@@ -6,10 +6,8 @@ import git
 import logging
 import os
 import pathlib
-import psycopg2
 import re
 import shutil
-import subprocess
 import svn.remote, svn.local
 import sys
 
@@ -172,7 +170,7 @@ class DemoVersionController(object):
             if not os.path.exists('.svn'):
                 cmd = 'svn checkout %s . --force --depth=infinity --username=%s --password=%s'
                 cmd = cmd % (svn_remote, svn_username, svn_password)
-                Dosser.exe(cmd)
+                DemoDosser.exe(cmd)
             
             self.svn_local_repo = svn.local.LocalClient('.', username=svn_username, password=svn_password)
 
@@ -250,7 +248,7 @@ class DemoVersionController(object):
             git_revision = rows[0][0]
             cmd = 'git reset --hard ' + git_revision
 
-        Dosser.exe(cmd)
+        DemoDosser.exe(cmd)
 
         git_revision = self.git_local_repo.head.commit.hexsha
         logging.info('git_revision: %s' % git_revision)
@@ -278,7 +276,7 @@ class DemoVersionController(object):
     def get_git_msgs(self, old_git_revision):
         git_msgs = []
 
-        git_commits = list(self.git_local_repo.iter_commits(GIT_BRANCH, max_count=100))
+        git_commits = list(self.git_local_repo.iter_commits(self.git_branch, max_count=100))
         git_commits.reverse()
 
         logging.info('old_git_revision: %s' % old_git_revision)
@@ -301,14 +299,14 @@ class DemoVersionController(object):
 
         git_stash_flag = False
         cmd = 'git stash --include-untracked'
-        result = Dosser.exe(cmd)
+        result = DemoDosser.exe(cmd)
         if result[1:-1] != 'No local changes to save':
             git_stash_flag = True
 
         try:
 
             cmd = 'svn status'
-            result = Dosser.exe(cmd)
+            result = DemoDosser.exe(cmd)
 
             status = result[1:-1].split('\n')
 
@@ -337,7 +335,7 @@ class DemoVersionController(object):
 
                     elif type_name == 'missing':
                         cmd = 'svn delete %s' % path
-                        Dosser.exe(cmd)
+                        DemoDosser.exe(cmd)
 
                     else:
                         pass
@@ -355,7 +353,7 @@ class DemoVersionController(object):
 
             if git_stash_flag:
                 cmd = 'git stash pop'
-                Dosser.exe(cmd)
+                DemoDosser.exe(cmd)
 
         self.svn_local_repo.update()
         new_svn_revision = self.svn_local_repo.info()['commit_revision']
@@ -442,7 +440,7 @@ class DemoVersionController(object):
 
     def nuget(self):
         cmd = 'nuget.exe restore'
-        Dosser.exe(cmd)
+        DemoDosser.exe(cmd)
 
         lib = os.path.join(self.name, 'lib')
 
@@ -470,11 +468,11 @@ class DemoVersionController(object):
             filename = '%s-%s' % (package, max_version)
             filename += '.zip'
             path_file = '%s/%s/%s' % (self.mini_releases, package, filename)
-            if not Dosser.scp_test(path_file):
+            if not DemoDosser.scp_test(path_file):
                 logging.error('No such file: %s' % path_file)
                 exit(1)
 
-            Dosser.scp(path_file, lib)
+            DemoDosser.scp(path_file, lib)
 
 
     def run_before_build(self):
@@ -517,7 +515,7 @@ class DemoVersionController(object):
 
         cmd = '%smsbuild.exe %s %s\%s.csproj'
         cmd = cmd % (msbuildpath, properties_str, self.name, self.name)
-        Dosser.exe(cmd)
+        DemoDosser.exe(cmd)
 
 
     def run_after_build(self, new_pg_version_str, new_git_revision, new_svn_revision):
