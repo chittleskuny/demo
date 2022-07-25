@@ -6,6 +6,8 @@ import logging
 import os
 import sys
 
+from logger import *
+
 
 class DemoDataBaseAdministrator(object):
     def __init__(self, brand):
@@ -29,10 +31,10 @@ class DemoDataBaseAdministrator(object):
         function = getattr(self, 'connect_' + self.brand)
         self.connection = function(cp[service])
         if not self.connection:
-            print('Failure.')
+            logging.error('Failure.')
             return False
 
-        print('Success.')
+        logging.info('Success.')
         return True
 
 
@@ -191,6 +193,6 @@ if __name__ == '__main__':
 
     cursor = dba.open_cursor()
     dba.execute(cursor, 'SHOW TABLES;')
-    print(dba.fetchall(cursor))
+    logging.debug(dba.fetchall(cursor))
     
     dba.disconnect()

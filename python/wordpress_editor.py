@@ -1,25 +1,75 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
+import getopt
 import os
+import shutil
 import sys
+import urllib.parse
 
 from database_administrator import *
 from logger import *
 
+valid_opts = {
+    'config': None,
+    'service': None,
+    'root': '.',
+    'force': False,
+}
+valid_args = []
+
+def get_opts_and_args(argv):
+    try:
+        opts, args = getopt.getopt(argv, '', [
+            'help',
+            'config=',
+            'service=',
+            'root=',
+            'force',
+        ])
+    except getopt.GetoptError as e:
+        logging.error(e)
+        sys.exit(-1)
+
+    for opt, arg in opts:
+        if opt in ('--help'):
+            logging.info('?')
+            exit(0)
+        elif opt in ('--config'):
+            valid_opts['config'] = arg
+        elif opt in ('--service'):
+            valid_opts['service'] = arg
+        elif opt in ('--root'):
+            valid_opts['root'] = arg
+        elif opt in ('--force'):
+            valid_opts['force'] = True
+        else:
+            logging.warning('unknown opt: %s.' % opt)
+    
+    logging.info('config: %s' % valid_opts['config'])
+    logging.info('service: %s' % valid_opts['service'])
+    logging.info('root: %s' % valid_opts['root'])
+    logging.info('force: %s' % valid_opts['force'])
+
+    valid_args = args
+    logging.info('valid_args: %s' % valid_args)
+
 
 class DemoWordPressEditor(object):
-    def __init__(self, dba, root):
+    def __init__(self, dba, root, force=False):
         self.dba = dba
         self.root = root
-        self.pull()
+        self.pull(force)
 
 
-    def pull(self):
-        root_posts = os.path.join(root, 'posts')
-        logging.debug(root_posts)
+    def pull(self, force=False):
+        root_posts = os.path.join(self.root, 'posts')
         if os.path.exists(root_posts):
-            return
+            if force:
+                logging.warning('Remove dir %s' % root_posts)
+                shutil.rmtree(root_posts)
+            else:
+                return
 
         os.mkdir(root_posts)
         self._pull_categories(root_posts)
@@ -59,7 +109,7 @@ class DemoWordPressEditor(object):
                     ---
                 '''.replace('    ', '') % (
                     term_id,
-                    slug,
+                    urllib.parse.unquote(slug),
                 )
                 f.write(content)
 
@@ -124,14 +174,9 @@ class DemoWordPressEditor(object):
 if __name__ == '__main__':
     DemoLogger(file=False)
 
-    if len(sys.argv) <= 3:
-        exit(1)
-
-    root = sys.argv[1]
-    config = sys.argv[2]
-    service = sys.argv[3]
+    get_opts_and_args(sys.argv[1:])
 
     dba = DemoDataBaseAdministrator('mysql')
-    if dba.connect(config, service):
-        wpe = DemoWordPressEditor(dba, root)
+    if dba.connect(valid_opts['config'], valid_opts['service']):
+        wpe = DemoWordPressEditor(dba, valid_opts['root'], valid_opts['force'])
         dba.disconnect()
