@@ -132,7 +132,7 @@ class DemoDataBaseAdministrator(object):
     def execute(self, cursor, sql):
         sql = sql.replace('    ', '')
         logging.info(sql)
-        return cursor.execute()
+        return cursor.execute(sql)
 
 
     def fetchall(self, cursor):

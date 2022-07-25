@@ -13,9 +13,9 @@ import subprocess
 import svn.remote, svn.local
 import sys
 
-from .database_administrator import *
-from .dosser import *
-from .logger import *
+from database_administrator import *
+from dosser import *
+from logger import *
 
 
 # default
@@ -528,7 +528,7 @@ class DemoVersionController(object):
 
 
 if __name__ == '__main__':
-    logger = Logger.DemoLogger(file=False)
+    logger = DemoLogger(file=False)
 
     get_opts_and_args(sys.argv[1:])
 
