@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import getopt
+import html
 import os
 import shutil
 import sys
@@ -162,7 +163,7 @@ class DemoWordPressEditor(object):
                     %s
                 '''.replace('    ', '') % (
                     ID,
-                    post_content_filtered.replace('\r\n', '\n'),
+                    html.unescape(post_content_filtered).replace('\r\n', '\n'),
                 )
                 f.write(content)
 
