@@ -7,11 +7,54 @@ import time
 
 
 class DemoLogger(object):
-    def __init__(self, stream=True, file=True, target=None):
-        time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+    def __init__(self, name=None, format=None, stream=True, file=True):
+        self.time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+
+        self.format = '%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s'
+        if format is not None:
+            self.format = format
+        
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
 
         logger = logging.getLogger()
-        format = '%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s'
+        logger.setLevel(logging.DEBUG)
+
+        if stream:
+            sh = logging.StreamHandler()
+            sh.setFormatter(logging.Formatter(self.format))
+            sh.setLevel(logging.DEBUG)
+            logger.addHandler(sh)
+
+        if file:
+            filename = '%s.log' % self.time_str
+            if name is not None:
+                filename = '%s_%s' % (name, filename)
+            path_file = os.path.join('logs', filename)
+            fh = logging.FileHandler(path_file)
+            fh.setFormatter(logging.Formatter(self.format))
+            fh.setLevel(logging.DEBUG)
+            logger.addHandler(fh)
+
+
+class DemoLoggerTree(object):
+    def __init__(self, name=None, format=None, stream=True, file=True):
+        self.time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+
+        self.format = '%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s'
+        if format is not None:
+            self.format = format
+
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
+
+        self._init_node('Lv0', '[0] %s' % self.format)
+        self._init_node('Lv0.Lv1', '[1] %s' % self.format)
+        self._init_node('Lv0.Lv1.Lv2', '[2] %s' % self.format)
+
+
+    def _init_node(self, name, format=None, stream=True, file=True):
+        logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
 
         if stream:
@@ -21,11 +64,7 @@ class DemoLogger(object):
             logger.addHandler(sh)
 
         if file:
-            if not os.path.exists('logs'):
-                os.makedirs('logs')
-            filename = '%s.log' % time_str
-            if target is not None:
-                filename = '%s_%s' % (target, filename)
+            filename = '%s_%s.log' % (name.replace('.', '_'), self.time_str)
             path_file = os.path.join('logs', filename)
             fh = logging.FileHandler(path_file)
             fh.setFormatter(logging.Formatter(format))
@@ -33,63 +72,28 @@ class DemoLogger(object):
             logger.addHandler(fh)
 
 
-class DemoLoggerTree(object):
-    def __init__(self):
-        time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-
-        # Lv0
-        name = 'Lv0' # root
-        logger = logging.getLogger()
-        format = '%(asctime)s %(levelname)s %(filename)s[%(lineno)d] [0] %(message)s'
-        logger.setLevel(logging.DEBUG)
-
-        sh = logging.StreamHandler()
-        sh.setFormatter(logging.Formatter(format))
-        sh.setLevel(logging.DEBUG)
-        logger.addHandler(sh)
-
-        fh = logging.FileHandler('%s.log' % time_str)
-        fh.setFormatter(logging.Formatter(format))
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-
-        # Lv1
-        name = 'Lv1'
-        logger = logging.getLogger(name)
-        format = '%(asctime)s %(levelname)s %(filename)s[%(lineno)d] [1] %(message)s'
-        logger.setLevel(logging.DEBUG)
-
-        sh = logging.StreamHandler()
-        sh.setFormatter(logging.Formatter(format))
-        sh.setLevel(logging.DEBUG)
-        logger.addHandler(sh)
-
-        fh = logging.FileHandler('%s_%s.log' % (time_str, name.replace('.', '_')))
-        fh.setFormatter(logging.Formatter(format))
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-
-        # Lv2
-        name = 'Lv1.Lv2'
-        logger = logging.getLogger(name)
-        format = '%(asctime)s %(levelname)s %(filename)s[%(lineno)d] [2] %(message)s'
-        logger.setLevel(logging.DEBUG)
-
-        sh = logging.StreamHandler()
-        sh.setFormatter(logging.Formatter(format))
-        sh.setLevel(logging.DEBUG)
-        logger.addHandler(sh)
-
-        fh = logging.FileHandler('%s_%s.log' % (time_str, name.replace('.', '_')))
-        fh.setFormatter(logging.Formatter(format))
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-
-
 if __name__ == '__main__':
-    DemoLogger(target='myself')
+
+    DemoLogger(name='myself')
 
     logging.debug('debug message.')
     logging.info('info message.')
     logging.warning('warning message.')
     logging.error('error message.')
+
+    ######
+
+    DemoLoggerTree()
+    logging.debug('Start')
+
+    logger = logging.getLogger()
+    logger.debug('Root')
+
+    logger_lv0 = logging.getLogger('Lv0')
+    logger_lv0.debug('000')
+
+    logger_lv1 = logging.getLogger('Lv0.Lv1')
+    logger_lv1.debug('111')
+
+    logger_lv2 = logging.getLogger('Lv0.Lv1.Lv2')
+    logger_lv2.debug('222')
