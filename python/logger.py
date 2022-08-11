@@ -7,7 +7,7 @@ import time
 
 
 class DemoLogger(object):
-    def __init__(self, stream=True, file=True):
+    def __init__(self, stream=True, file=True, target=None):
         time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
         logger = logging.getLogger()
@@ -22,8 +22,11 @@ class DemoLogger(object):
 
         if file:
             if not os.path.exists('logs'):
-                os.mkdir('logs')
-            path_file = os.path.join('logs', '%s.log' % time_str)
+                os.makedirs('logs')
+            filename = '%s.log' % time_str
+            if target is not None:
+                filename = '%s_%s' % (target, filename)
+            path_file = os.path.join('logs', filename)
             fh = logging.FileHandler(path_file)
             fh.setFormatter(logging.Formatter(format))
             fh.setLevel(logging.DEBUG)
@@ -84,7 +87,7 @@ class DemoLoggerTree(object):
 
 
 if __name__ == '__main__':
-    logger = DemoLogger(file=False)
+    DemoLogger(target='myself')
 
     logging.debug('debug message.')
     logging.info('info message.')
