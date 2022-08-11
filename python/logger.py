@@ -7,30 +7,38 @@ import time
 
 
 class DemoLogger(object):
-    def __init__(self, name=None, format=None, stream=True, file=True):
+    def __init__(
+            self,
+            filename=None,
+            pathname='logs',
+            format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s',
+            stream_enable=True,
+            file_enable=True
+        ):
         self.time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
-        self.format = '%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s'
-        if format is not None:
-            self.format = format
+        self.filename = filename
+        self.pathname = pathname
+
+        self.format = format
         
-        if not os.path.exists('logs'):
-            os.makedirs('logs')
+        if not os.path.exists(self.pathname):
+            os.makedirs(self.pathname)
 
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
 
-        if stream:
+        if stream_enable:
             sh = logging.StreamHandler()
             sh.setFormatter(logging.Formatter(self.format))
             sh.setLevel(logging.DEBUG)
             logger.addHandler(sh)
 
-        if file:
-            filename = '%s.log' % self.time_str
-            if name is not None:
-                filename = '%s_%s' % (name, filename)
-            path_file = os.path.join('logs', filename)
+        if file_enable:
+            full_filename = '%s.log' % self.time_str
+            if self.filename is not None:
+                full_filename = '%s_%s' % (self.filename, full_filename)
+            path_file = os.path.join(self.pathname, full_filename)
             fh = logging.FileHandler(path_file)
             fh.setFormatter(logging.Formatter(self.format))
             fh.setLevel(logging.DEBUG)
@@ -38,34 +46,44 @@ class DemoLogger(object):
 
 
 class DemoLoggerTree(object):
-    def __init__(self, name=None, format=None, stream=True, file=True):
+    def __init__(
+            self,
+            filename=None,
+            pathname='logs',
+            format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s',
+            stream_enable=True,
+            file_enable=True
+        ):
         self.time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
-        self.format = '%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s'
-        if format is not None:
-            self.format = format
+        self.filename = filename
+        self.pathname = pathname
 
-        if not os.path.exists('logs'):
-            os.makedirs('logs')
+        self.format = format
+
+        if not os.path.exists(self.pathname):
+            os.makedirs(self.pathname)
 
         self._init_node('Lv0', '[0] %s' % self.format)
         self._init_node('Lv0.Lv1', '[1] %s' % self.format)
         self._init_node('Lv0.Lv1.Lv2', '[2] %s' % self.format)
 
 
-    def _init_node(self, name, format=None, stream=True, file=True):
-        logger = logging.getLogger(name)
+    def _init_node(self, node, format=None, stream_enable=True, file_enable=True):
+        logger = logging.getLogger(node)
         logger.setLevel(logging.DEBUG)
 
-        if stream:
+        if stream_enable:
             sh = logging.StreamHandler()
             sh.setFormatter(logging.Formatter(format))
             sh.setLevel(logging.DEBUG)
             logger.addHandler(sh)
 
-        if file:
-            filename = '%s_%s.log' % (name.replace('.', '_'), self.time_str)
-            path_file = os.path.join('logs', filename)
+        if file_enable:
+            full_filename = '%s_%s.log' % (node, self.time_str)
+            if self.filename is not None:
+                full_filename = '%s_%s' % (self.filename.replace('.', '_'), full_filename)
+            path_file = os.path.join(self.pathname, full_filename)
             fh = logging.FileHandler(path_file)
             fh.setFormatter(logging.Formatter(format))
             fh.setLevel(logging.DEBUG)
@@ -74,7 +92,7 @@ class DemoLoggerTree(object):
 
 if __name__ == '__main__':
 
-    DemoLogger(name='myself')
+    DemoLogger()
 
     logging.debug('debug message.')
     logging.info('info message.')
@@ -83,7 +101,7 @@ if __name__ == '__main__':
 
     ######
 
-    DemoLoggerTree()
+    DemoLoggerTree(filename='tree')
     logging.debug('Start')
 
     logger = logging.getLogger()
