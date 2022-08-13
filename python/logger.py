@@ -92,6 +92,8 @@ class DemoLoggerTree(object):
 
 if __name__ == '__main__':
 
+    # DemoLogger
+
     DemoLogger()
 
     logging.debug('debug message.')
@@ -99,7 +101,7 @@ if __name__ == '__main__':
     logging.warning('warning message.')
     logging.error('error message.')
 
-    ######
+    # DemoLoggerTree
 
     DemoLoggerTree(filename='tree')
     logging.debug('Start')

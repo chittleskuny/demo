@@ -1,17 +1,53 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
+import getopt
 import logging
 import os
 import re
 import subprocess
+import sys
 
-from .logger import *
+from logger import *
 
 
 class DemoDosser(object):
     def __init__(self):
         pass
+
+
+    @staticmethod
+    def get_opts(short_opts, long_opts, argv=None):
+        valid_opts, valid_args = {}, {}
+
+        if argv is None:
+            if len(sys.argv) < 1:
+                logging.error('No argv!') 
+                exit(-1)
+            else:
+                argv = sys.argv[1:]
+
+        try:
+            opts, args = getopt.getopt(argv, short_opts, long_opts)
+        except getopt.GetoptError as e:
+            logging.error(e)
+            sys.exit(-1)
+
+        for opt, arg in opts:
+            if opt.startswith('-'):
+                pass # Not Support yet.
+            if opt.startswith('--'):
+                opt = opt[2:]
+                if opt in long_opts:
+                    valid_opts[opt] = True
+                elif opt + '=' in long_opts:
+                    valid_opts[opt] = arg
+                else:
+                    logging.warning(opt)
+        
+        valid_args = args
+
+        return (valid_opts, valid_args)
 
 
     @staticmethod
@@ -97,6 +133,17 @@ class DemoDosser(object):
 
 
     @staticmethod
+    def _pop(path_stack, tail_stack):
+        while tail_stack and tail_stack[-1] == 1:
+            path_stack.pop()
+            tail_stack.pop()
+        if len(tail_stack) > 0 and tail_stack[-1] != 0:
+            path_stack.pop()
+            tail_stack.pop()
+        return path_stack, tail_stack
+
+
+    @staticmethod
     def scp(source, target, skip=False):
         if DemoDosser._scp_test(source):
             cmd = 'scp %s %s' % (source, target)
@@ -134,17 +181,6 @@ class DemoDosser(object):
 
 
     @staticmethod
-    def _pop(path_stack, tail_stack):
-        while tail_stack and tail_stack[-1] == 1:
-            path_stack.pop()
-            tail_stack.pop()
-        if len(tail_stack) > 0 and tail_stack[-1] != 0:
-            path_stack.pop()
-            tail_stack.pop()
-        return path_stack, tail_stack
-
-
-    @staticmethod
     def wmic_datafile_get_version(debug_flag, filename):
         release_filename = os.path.join('Release', filename)
         if debug_flag:
@@ -174,6 +210,29 @@ class DemoDosser(object):
 
 
 if __name__ == '__main__':
+
+    DemoLogger(file_enable=False)
+
+    # DemoDosser get_opts
+
+    short_opts = ''
+    long_opts = [
+        'help',
+        'arg_a',
+        'opt_b=',
+        'opt_c=',
+    ]
+    argv = [
+        '--arg_a',
+        '--opt_b=bb',
+        '--opt_c=cc',
+    ]
+    (valid_opts, valid_args) = DemoDosser.get_opts(short_opts, long_opts, argv)
+    logging.info(valid_opts)
+    logging.info(valid_args)
+
+    # DemoDosser exe
+
     cmd = '''
         echo %date%
     '''
