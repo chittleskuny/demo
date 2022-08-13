@@ -16,31 +16,6 @@ from dosser import *
 from logger import *
 
 
-# default
-properties = {
-    'Configuration': 'Release',
-    'Platform': 'AnyCPU',
-}
-
-valid_opts = {
-    'config': None,
-    'service': None,
-    'root_directory': '.',
-    'name': None,
-    'mini_releases': None,
-    'properties': properties,
-    'start_index': 3,
-    'delta_index': -1,
-    'git_branch': 'master',
-    'git_to_svn': False,
-    'force': False,
-    'svn_remote': None,
-    'svn_username': None,
-    'svn_password': None,
-    'pg_version': None,
-}
-valid_args = []
-
 type_names = {
     '?': 'unversioned',
     '!': 'missing',
@@ -51,81 +26,58 @@ type_names = {
 }
 
 
-def get_opts_and_args(argv):
-    try:
-        opts, args = getopt.getopt(argv, '', [
-            'help',
-            'config=',
-            'service=',
-            'root_directory='
-            'name=',
-            'mini_releases=',
-            'start_index=',
-            'delta_index=',
-            'git_branch=',
-            'git_to_svn',
-            'force',
-            'svn_remote=',
-            'svn_username=',
-            'svn_password=',
-            'pg_version=',
-        ])
-    except getopt.GetoptError as e:
-        logging.error(e)
-        sys.exit(-1)
+def parse_opts_and_args(valid_opts, valid_args):
+    if 'config' not in valid_opts:
+        logging.error('No config.')
+        exit(1)
 
-    for opt, arg in opts:
-        if opt in ('--help'):
-            logging.info('?')
-            exit(0)
-        elif opt in ('--config'):
-            valid_opts['config'] = arg
-        elif opt in ('--service'):
-            valid_opts['service'] = arg
-        elif opt in ('--root_directory'):
-            valid_opts['root_directory'] = arg
-        elif opt in ('--name'):
-            valid_opts['name'] = arg
-        elif opt in ('--mini_releases'):
-            valid_opts['mini_releases'] = arg
-        elif opt in ('--start_index'):
-            valid_opts['start_index'] = int(arg)
-        elif opt in ('--delta_index'):
-            valid_opts['delta_index'] = int(arg)
-        elif opt in ('--git_branch'):
-            valid_opts['git_branch'] = arg
-        elif opt in ('--git_to_svn'):
-            valid_opts['git_to_svn'] = True
-        elif opt in ('--force'):
-            valid_opts['force'] = True
-        elif opt in ('--svn_remote'):
-            valid_opts['svn_remote'] = arg
-        elif opt in ('--svn_username'):
-            valid_opts['svn_username'] = arg
-        elif opt in ('--svn_password'):
-            valid_opts['svn_password'] = arg
-        elif opt in ('--pg_version') and arg != '':
-            valid_opts['pg_version'] = [int(i) for i in arg.split('.')]
-        else:
-            logging.warning('unknown opt: %s.' % opt)
-    
-    logging.info('config: %s' % valid_opts['config'])
-    logging.info('service: %s' % valid_opts['service'])
-    logging.info('root_directory: %s' % valid_opts['root_directory'])
-    logging.info('name: %s' % valid_opts['name'])
-    logging.info('mini_releases: %s' % valid_opts['mini_releases'])
-    logging.info('start_index: %s' % valid_opts['start_index'])
-    logging.info('delta_index: %s' % valid_opts['delta_index'])
-    logging.info('git_branch: %s' % valid_opts['git_branch'])
-    logging.info('git_to_svn: %s' % valid_opts['git_to_svn'])
-    logging.info('force: %s' % valid_opts['force'])
-    logging.info('svn_remote: %s' % valid_opts['svn_remote'])
-    logging.info('svn_username: %s' % valid_opts['svn_username'])
-    logging.info('svn_password: %s' % valid_opts['svn_password'])
-    logging.info('pg_version: %s' % valid_opts['pg_version'])
+    if 'service' not in valid_opts:
+        logging.error('No service.')
+        exit(1)
 
-    valid_args = args
-    logging.info('valid_args: %s' % valid_args)
+    if 'name' not in valid_opts:
+        logging.error('No name.')
+        exit(1)
+
+    if 'mini_releases' not in valid_opts:
+        logging.error('No mini_releases.')
+        exit(1)
+
+    if 'service' not in valid_opts:
+        valid_opts['service'] = None
+
+    if 'start_index' not in valid_opts:
+        valid_opts['start_index'] = 3
+    else:
+        valid_opts['start_index'] = int(valid_opts['start_index'])
+
+    if 'delta_index' not in valid_opts:
+        valid_opts['delta_index'] = -1
+    else:
+        valid_opts['delta_index'] = int(valid_opts['delta_index'])
+
+    if 'git_branch' not in valid_opts:
+        valid_opts['git_branch'] = 'master'
+
+    if 'git_to_svn' not in valid_opts:
+        valid_opts['git_to_svn'] = False
+
+    if 'force' not in valid_opts:
+        valid_opts['force'] = False
+
+    if 'svn_remote' not in valid_opts:
+        valid_opts['svn_remote'] = None
+
+    if 'svn_username' not in valid_opts:
+        valid_opts['svn_username'] = None
+
+    if 'svn_password' not in valid_opts:
+        valid_opts['svn_password'] = None
+
+    if 'pg_version' not in valid_opts:
+        valid_opts['pg_version'] = None
+    else:
+        valid_opts['pg_version'] = [int(i) for i in arg.split('.')]
 
 
 class DemoVersionController(object):
@@ -526,9 +478,31 @@ class DemoVersionController(object):
 
 
 if __name__ == '__main__':
-    logger = DemoLogger(file=False)
+    logger = DemoLogger(file_enable=False)
 
-    get_opts_and_args(sys.argv[1:])
+    short_opts = ''
+    long_opts = [
+        'help',
+        'config=',
+        'service=',
+        'root_directory='
+        'name=',
+        'mini_releases=',
+        'start_index=',
+        'delta_index=',
+        'git_branch=',
+        'git_to_svn',
+        'force',
+        'svn_remote=',
+        'svn_username=',
+        'svn_password=',
+        'pg_version=',
+    ]
+    (valid_opts, valid_args) = DemoDosser.get_opts(short_opts, long_opts)
+    logging.info('valid_opts: %s' % valid_opts)
+    logging.info('valid_args: %s' % valid_args)
+
+    parse_opts_and_args(valid_opts, valid_args)
 
     logging.info('cd %s' % valid_opts['root_directory'])
     os.chdir(valid_opts['root_directory'])
@@ -552,5 +526,11 @@ if __name__ == '__main__':
     )
 
     version_controlller.connect_pg(dba.connection)
-    version_controlller.run(valid_opts['properties'])
+
+    properties = {
+        'Configuration': 'Release',
+        'Platform': 'AnyCPU',
+    }
+    version_controlller.run(properties)
+
     version_controlller.disconnect_pg()

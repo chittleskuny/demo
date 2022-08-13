@@ -31,12 +31,6 @@ class DemoTest(object):
         cat._tail('cat.py')
 
 
-    def test_demo_dosser(self):
-        dosser = DemoDosser()
-        tree_list = dosser.tree('output.txt')
-        print(tree_list)
-
-
     def test_demo_excel(self):
         xls = DemoExcel('test.xls')
         xls.open_worksheet('test')
@@ -45,37 +39,6 @@ class DemoTest(object):
         xlsx = DemoExcel('test.xlsx')
         xlsx.open_worksheet('test')
         xlsx.save_workbook()
-
-
-    def test_demo_logger(self):
-        DemoLogger()
-        logging.debug('A')
-
-        '''
-        A
-        '''
-
-
-    def test_demo_logger_tree(self):
-        DemoLoggerTree()
-        logging.debug('A')
-
-        logger_lv0 = logging.getLogger()
-        logger_lv1 = logging.getLogger('Lv1')
-        logger_lv2 = logging.getLogger('Lv1.Lv2')
-        logger_lv0.debug('B')
-        logger_lv1.debug('C')
-        logger_lv2.debug('D')
-
-        '''
-        [0] A
-        [0] B
-        [1] C
-        [0] C
-        [2] D
-        [1] D
-        [0] D
-        '''
 
 
     def test_demo_stepper(self):

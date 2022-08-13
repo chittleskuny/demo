@@ -228,8 +228,8 @@ if __name__ == '__main__':
         '--opt_c=cc',
     ]
     (valid_opts, valid_args) = DemoDosser.get_opts(short_opts, long_opts, argv)
-    logging.info(valid_opts)
-    logging.info(valid_args)
+    logging.info('valid_opts: %s' % valid_opts)
+    logging.info('valid_args: %s' % valid_args)
 
     # DemoDosser exe
 
