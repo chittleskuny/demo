@@ -72,7 +72,7 @@ class DemoWordPressEditor(object):
             else:
                 return
 
-        os.mkdir(root_posts)
+        os.makedirs(root_posts)
         self._pull_categories(root_posts)
 
 
@@ -147,24 +147,16 @@ class DemoWordPressEditor(object):
                 post_content_filtered,
             ) = post_row
 
-            post = '''[%s] %s.md''' % (
+            post = '''[%s][p%d] %s.md''' % (
                 time.strftime('%Y%m%d_%H%M%S', post_date.timetuple()),
+                ID,
                 post_title,
             )
             root_posts_post = os.path.join(root_posts_category, post)
             logging.info('Pull %s' % root_posts_post)
             
             with open(root_posts_post, 'w', encoding='utf-8', newline='\n') as f:
-                content = '''
-                    ---
-                    ID: %d
-                    ---
-
-                    %s
-                '''.replace('    ', '') % (
-                    ID,
-                    html.unescape(post_content_filtered).replace('\r\n', '\n'),
-                )
+                content = html.unescape(post_content_filtered).replace('\r\n', '\n')
                 f.write(content)
 
 
@@ -173,7 +165,7 @@ class DemoWordPressEditor(object):
 
 
 if __name__ == '__main__':
-    DemoLogger(file=False)
+    DemoLogger(file_enable=False)
 
     get_opts_and_args(sys.argv[1:])
 

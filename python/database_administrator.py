@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 
+from dosser import *
 from logger import *
 
 
@@ -133,7 +134,7 @@ class DemoDataBaseAdministrator(object):
 
     def execute(self, cursor, sql):
         sql = sql.replace('    ', '')
-        logging.info(sql)
+        logging.debug(sql)
         return cursor.execute(sql)
 
 

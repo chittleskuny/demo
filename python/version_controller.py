@@ -511,7 +511,7 @@ if __name__ == '__main__':
     if not dba.connect(config, service):
         exit(1)
 
-    version_controlller = DemoVersionController(
+    version_controller = DemoVersionController(
         valid_opts['name'],
         valid_opts['mini_releases'],
         valid_opts['start_index'],
@@ -525,12 +525,12 @@ if __name__ == '__main__':
         valid_opts['pg_version'],
     )
 
-    version_controlller.connect_pg(dba.connection)
+    version_controller.connect_pg(dba.connection)
 
     properties = {
         'Configuration': 'Release',
         'Platform': 'AnyCPU',
     }
-    version_controlller.run(properties)
+    version_controller.run(properties)
 
-    version_controlller.disconnect_pg()
+    version_controller.disconnect_pg()
