@@ -147,7 +147,7 @@ class DemoWordPressEditor(object):
                 post_content_filtered,
             ) = post_row
 
-            post = '''[%s][p%d] %s.md''' % (
+            post = '''[%s] [p%d] %s.md''' % (
                 time.strftime('%Y%m%d_%H%M%S', post_date.timetuple()),
                 ID,
                 post_title,
