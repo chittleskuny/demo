@@ -11,18 +11,14 @@ GITLAB_PRIVATE_TOKEN = 'chittleskuny'
 
 class DemoGitLabNamespace(object):
     def __init__(self, namespace):
-        self.id = group['id']
-        self.name = group['name']
-        self.path = group['path']
-        self.kind = group['kind']
-        self.full_path = group['full_path']
-        self.parent_id = group['parent_id']
-        self.avatar_url = group['avatar_url']
-        self.web_url = group['web_url']
-        self.billable_members_count = group['billable_members_count']
-        self.plan = group['plan']
-        self.trial_ends_on = group['trial_ends_on']
-        self.trial = group['trial']
+        self.id = namespace['id']
+        self.name = namespace['name']
+        self.path = namespace['path']
+        self.kind = namespace['kind']
+        self.full_path = namespace['full_path']
+        self.parent_id = namespace['parent_id']
+        self.avatar_url = namespace['avatar_url']
+        self.web_url = namespace['web_url']
 
 
     def __str__(self):
