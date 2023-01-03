@@ -166,6 +166,8 @@ class DemoWordPressEditor(object):
 
 if __name__ == '__main__':
     DemoLogger(file_enable=False)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
     get_opts_and_args(sys.argv[1:])
 
