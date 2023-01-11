@@ -6,6 +6,17 @@ import git
 import os
 import sys
 
+from colorama import init, Fore
+
+
+expected_repo_location_user_name = {
+    'github': 'Chittle Skuny',
+}
+
+expected_repo_location_user_email = {
+    'github': 'chittleskuny@gmail.com',
+}
+
 
 class DemoGitter():
     def __init__(self, folders_txt):
@@ -53,7 +64,7 @@ class DemoGitter():
 
             stash_list = git_repo.git.stash('list')
             if stash_list:
-                print(stash_list)
+                print(Fore.YELLOW + stash_list)
 
             user_name = None
             user_email = None
@@ -69,8 +80,12 @@ class DemoGitter():
                     pass
                 except KeyError:
                     pass
-            
-            print('%s<%s>' % (user_name, user_email))
+
+            if (repo_location in expected_repo_location_user_name and expected_repo_location_user_name[repo_location] != user_name) or \
+                    (repo_location in expected_repo_location_user_email and expected_repo_location_user_email[repo_location] != user_email):
+                print(Fore.RED + '%s<%s>' % (user_name, user_email))
+            else:
+                print('%s<%s>' % (user_name, user_email))
 
 
 if __name__ == '__main__':
@@ -79,5 +94,7 @@ if __name__ == '__main__':
     
     folders = sys.argv[1]
 
+    init(autoreset=True)
+    
     gitter = DemoGitter(folders)
     gitter.get_status()
