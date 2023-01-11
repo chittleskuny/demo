@@ -57,14 +57,19 @@ class DemoGitter():
             print('')
             git_repo = git.Repo(repo)
 
-            repo_path_list = os.path.split(repo)
-            repo_location = repo_path_list[0].split('\\')[2]
-            repo_name = repo_path_list[-1]
-            print('[%s] %s (%s)' % (repo_location, repo_name, git_repo.active_branch))
+            repo_path_split = os.path.split(repo)
+            repo_path_list = repo_path_split[0].split('\\')
+            repo_location = repo_path_list[2]
+            repo_name = '/'.join(repo_path_list[3:] + [repo_path_split[1]])
+            
+            if str(git_repo.active_branch) == 'master':
+                print('[%s] %s (%s)' % (repo_location, repo_name, git_repo.active_branch))
+            else:
+                print('[%s] %s %s(%s)' % (repo_location, repo_name, Fore.YELLOW, git_repo.active_branch))
 
             stash_list = git_repo.git.stash('list')
             if stash_list:
-                print(Fore.YELLOW + stash_list)
+                print('%s%s' % (Fore.YELLOW, stash_list))
 
             user_name = None
             user_email = None
@@ -83,7 +88,7 @@ class DemoGitter():
 
             if (repo_location in expected_repo_location_user_name and expected_repo_location_user_name[repo_location] != user_name) or \
                     (repo_location in expected_repo_location_user_email and expected_repo_location_user_email[repo_location] != user_email):
-                print(Fore.RED + '%s<%s>' % (user_name, user_email))
+                print('%s%s<%s>' % (Fore.RED, user_name, user_email))
             else:
                 print('%s<%s>' % (user_name, user_email))
 
