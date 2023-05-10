@@ -43,6 +43,7 @@ class DemoLogger(object):
             fh.setFormatter(logging.Formatter(self.format))
             fh.setLevel(logging.DEBUG)
             logger.addHandler(fh)
+            logging.info(full_filename)
 
 
 class DemoLoggerTree(object):
