@@ -47,7 +47,7 @@ class DemoTracter(object):
                 continue
 
             if isinstance(arg, list):
-                cmd.append(' ',join(arg_dict[arg]))
+                cmd.append(' '.join(arg_dict[arg]))
             elif isinstance(arg_dict[arg], dict):
                 for k, v in arg_dict[arg].items():
                     cmd.append('%s %s' % (k, v))
