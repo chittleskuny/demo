@@ -57,13 +57,13 @@ def get_opts_and_args(argv):
 
 
 class DemoWordPressEditor(object):
-    def __init__(self, dba, root, force=False):
+    def __init__(self, dba, root, force = False):
         self.dba = dba
         self.root = root
         self.pull(force)
 
 
-    def pull(self, force=False):
+    def pull(self, force = False):
         root_posts = os.path.join(self.root, 'posts')
         if os.path.exists(root_posts):
             if force:
@@ -165,7 +165,7 @@ class DemoWordPressEditor(object):
 
 
 if __name__ == '__main__':
-    DemoLogger(file_enable=False)
+    DemoLogger(file_enable = False)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 

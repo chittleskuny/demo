@@ -87,13 +87,13 @@ class DemoVersionController(object):
             mini_releases,
             start_index,
             delta_index,
-            git_branch='master',
-            git_to_svn=False,
-            force=False,
-            svn_remote=None,
-            svn_username=None,
-            svn_password=None,
-            pg_version=None
+            git_branch = 'master',
+            git_to_svn = False,
+            force = False,
+            svn_remote = None,
+            svn_username = None,
+            svn_password = None,
+            pg_version = None
         ):
         self.name = name
 
@@ -124,7 +124,7 @@ class DemoVersionController(object):
                 cmd = cmd % (svn_remote, svn_username, svn_password)
                 DemoDosser.exe(cmd)
             
-            self.svn_local_repo = svn.local.LocalClient('.', username=svn_username, password=svn_password)
+            self.svn_local_repo = svn.local.LocalClient('.', username = svn_username, password = svn_password)
 
         self.pg_version = pg_version
         if pg_version is not None:
@@ -228,7 +228,7 @@ class DemoVersionController(object):
     def get_git_msgs(self, old_git_revision):
         git_msgs = []
 
-        git_commits = list(self.git_local_repo.iter_commits(self.git_branch, max_count=100))
+        git_commits = list(self.git_local_repo.iter_commits(self.git_branch, max_count = 100))
         git_commits.reverse()
 
         logging.info('old_git_revision: %s' % old_git_revision)
@@ -278,7 +278,7 @@ class DemoVersionController(object):
                                 logging.info('mkdir %s' % path)
                                 os.mkdir(path)
 
-                            subpaths = self.get_git_not_ignored_paths(path=path)
+                            subpaths = self.get_git_not_ignored_paths(path = path)
                             for subpath in subpaths:
                                 try:
                                     self.svn_local_repo.add(subpath)
@@ -478,7 +478,7 @@ class DemoVersionController(object):
 
 
 if __name__ == '__main__':
-    logger = DemoLogger(file_enable=False)
+    logger = DemoLogger(file_enable = False)
 
     short_opts = ''
     long_opts = [

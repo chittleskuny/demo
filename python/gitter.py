@@ -99,7 +99,7 @@ if __name__ == '__main__':
     
     folders = sys.argv[1]
 
-    init(autoreset=True)
+    init(autoreset = True)
     
     gitter = DemoGitter(folders)
     gitter.get_status()

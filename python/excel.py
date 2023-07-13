@@ -11,7 +11,7 @@ import xlrd, xlwt
 class DemoExcel(object):
     cell_width = { 'xls': 256*11, 'xlsx': 8.38 }
 
-    def __init__(self, workbook_name=None):
+    def __init__(self, workbook_name = None):
         self.workbook = None
         self.origin = 0
         self.mode = 'r'
@@ -20,7 +20,7 @@ class DemoExcel(object):
 
     ### workbook ###
 
-    def new_workbook(self, workbook_name=None):
+    def new_workbook(self, workbook_name = None):
         if workbook_name.endswith('.xls'):
             self.workbook = xlwt.Workbook()
             self.extension = '.xls'
@@ -35,15 +35,15 @@ class DemoExcel(object):
         self.mode = 'w'
         return self.workbook
 
-    def open_workbook(self, workbook_name=None):
+    def open_workbook(self, workbook_name = None):
         if not workbook_name or not os.path.isfile(workbook_name):
             self.new_workbook(workbook_name)
         else:
             if workbook_name.endswith('.xls'):
-                self.workbook = xlrd.open_workbook(filename=workbook_name)
+                self.workbook = xlrd.open_workbook(filename = workbook_name)
                 self.extension = '.xls'
             elif workbook_name.endswith('.xlsx'):
-                self.workbook = openpyxl.load_workbook(filename=workbook_name)
+                self.workbook = openpyxl.load_workbook(filename = workbook_name)
                 self.extension = '.xlsx'
             else:
                 pass
@@ -51,7 +51,7 @@ class DemoExcel(object):
             self.mode = 'r'
         return self.workbook
 
-    def save_workbook(self, workbook_name=None):
+    def save_workbook(self, workbook_name = None):
         if self.mode == 'r':
             return None
         elif self.mode == 'w':
@@ -106,7 +106,7 @@ class DemoExcel(object):
             worksheet = None
         return worksheet
 
-    def open_worksheet(self, worksheet_name=None, worksheet_index=None):
+    def open_worksheet(self, worksheet_name = None, worksheet_index = None):
         if worksheet_name and worksheet_index:
             return None
         if self.mode == 'r':
@@ -233,7 +233,7 @@ class DemoExcel(object):
 
     ### column & row ###
 
-    def set_column_width(self, worksheet, column=None, column_index=None, multiple=1):
+    def set_column_width(self, worksheet, column = None, column_index = None, multiple = 1):
         if column and not column_index:
             column_index = self.get_column_index_from_string(column)
         if not column_index:
@@ -254,7 +254,7 @@ class DemoExcel(object):
 
     ### cell ###
 
-    def get_cell(self, worksheet, column=None, row=None, column_index=None, row_index=None):
+    def get_cell(self, worksheet, column = None, row = None, column_index = None, row_index = None):
         if not column_index:
             column_index = self.get_column_index_from_string(column)
         if not row_index:
@@ -273,7 +273,7 @@ class DemoExcel(object):
             cell = None
         return cell
 
-    def get_cell_value(self, worksheet, column=None, row=None, column_index=None, row_index=None):
+    def get_cell_value(self, worksheet, column = None, row = None, column_index = None, row_index = None):
         if not column_index:
             column_index = self.get_column_index_from_string(column)
         if not row_index:
@@ -292,7 +292,19 @@ class DemoExcel(object):
             cell_value = None
         return cell_value
 
-    def set_cell(self, worksheet, column=None, row=None, column_index=None, row_index=None, merge_column_vector=0, row_merge_vector=0, cell_value=None, formula=None, style=None):
+    def set_cell(
+            self,
+            worksheet,
+            column = None,
+            row = None,
+            column_index = None,
+            row_index = None,
+            merge_column_vector = 0,
+            row_merge_vector = 0,
+            cell_value = None,
+            formula = None,
+            style = None
+        ):
         if not column_index:
             column_index = self.get_column_index_from_string(column)
         if not row_index:
@@ -304,14 +316,14 @@ class DemoExcel(object):
             if self.extension == '.xls':
                 if merge_column_vector == 0 and row_merge_vector == 0:
                     if not style:
-                        worksheet.write(row_index, column_index, label=cell_value)
+                        worksheet.write(row_index, column_index, label = cell_value)
                     else:
-                        worksheet.write(row_index, column_index, label=cell_value, style=style)
+                        worksheet.write(row_index, column_index, label = cell_value, style = style)
                 else:
                     if not style:
-                        worksheet.write_merge(row_index, row_index + row_merge_vector, column_index, column_index + merge_column_vector, label=cell_value)
+                        worksheet.write_merge(row_index, row_index + row_merge_vector, column_index, column_index + merge_column_vector, label = cell_value)
                     else:
-                        worksheet.write_merge(row_index, row_index + row_merge_vector, column_index, column_index + merge_column_vector, label=cell_value, style=style)
+                        worksheet.write_merge(row_index, row_index + row_merge_vector, column_index, column_index + merge_column_vector, label = cell_value, style = style)
             elif self.extension == '.xlsx':
                 worksheet.cell(row_index, column_index).value = cell_value
             else:

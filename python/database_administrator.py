@@ -77,12 +77,12 @@ class DemoDataBaseAdministrator(object):
             database = items['database']
 
         return mysql.connector.connect(
-            host=host,
-            port=port,
-            user=user,
-            password=password,
-            database=database,
-            auth_plugin='mysql_native_password'
+            host = host,
+            port = port,
+            user = user,
+            password = password,
+            database = database,
+            auth_plugin = 'mysql_native_password'
         )
 
 

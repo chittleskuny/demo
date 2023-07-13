@@ -5,20 +5,20 @@ import os
 
 
 class DemoCat():
-    def __init__(self, prt_flag=False):
+    def __init__(self, prt_flag = False):
         self.blk_size = 1024
         self.prt_flag = prt_flag
 
-    def _more(self, path_file, num=1000):
+    def _more(self, path_file, num = 1000):
         return []
 
-    def _less(self, path_file, num=1000):
+    def _less(self, path_file, num = 1000):
         return []
 
-    def _head(self, path_file, num=1000):
+    def _head(self, path_file, num = 1000):
         return []
 
-    def _tail(self, path_file, num=1000):
+    def _tail(self, path_file, num = 1000):
         tails = []
         with open(path_file, 'rb') as fp:
             fp.seek(0, os.SEEK_END)

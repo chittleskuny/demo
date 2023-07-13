@@ -17,7 +17,7 @@ class DemoDosser(object):
 
 
     @staticmethod
-    def get_opts(short_opts, long_opts, argv=None):
+    def get_opts(short_opts, long_opts, argv = None):
         valid_opts, valid_args = {}, {}
 
         if argv is None:
@@ -55,7 +55,7 @@ class DemoDosser(object):
         cmd = cmd.replace('    ', '')
         logging.info(cmd)
         try:
-            output = subprocess.check_output(cmd, shell=True)
+            output = subprocess.check_output(cmd, shell = True)
         except:
             logging.error('The command execution failure: %s' % cmd)
             exit(-1)
@@ -144,7 +144,7 @@ class DemoDosser(object):
 
 
     @staticmethod
-    def scp(source, target, skip=False):
+    def scp(source, target, skip = False):
         if DemoDosser._scp_test(source):
             cmd = 'scp %s %s' % (source, target)
             DemoDosser.exe(cmd)
@@ -165,7 +165,7 @@ class DemoDosser(object):
             test_cmd = 'ssh %s "ls %s > /dev/null 2>&1"' % (_prefix, _suffix)
             logging.info(test_cmd)
             try:
-                output = subprocess.check_output(test_cmd, shell=True)            
+                output = subprocess.check_output(test_cmd, shell = True)            
             except:
                 logging.error('No such file: %s' % path_file)
                 return False
@@ -210,8 +210,7 @@ class DemoDosser(object):
 
 
 if __name__ == '__main__':
-
-    DemoLogger(file_enable=False)
+    DemoLogger(file_enable = False)
 
     # DemoDosser get_opts
 

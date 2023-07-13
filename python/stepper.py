@@ -3,7 +3,7 @@
 
 
 class DemoStepper(object):
-    def __init__(self, mode='both'):
+    def __init__(self, mode = 'both'):
         self.max, self.cur = [], [] # number list
         self.limit_from, self.limit_to = None, None
         self.mode = mode
@@ -35,7 +35,7 @@ class DemoStepper(object):
         self.cur.append(0)
         return 0
 
-    def limit(self, limit_from=None, limit_to=None):
+    def limit(self, limit_from = None, limit_to = None):
         if limit_from:
             self.limit_from = list(map(lambda x:int(x), limit_from))
         if limit_to:

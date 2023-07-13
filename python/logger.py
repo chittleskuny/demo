@@ -9,11 +9,11 @@ import time
 class DemoLogger(object):
     def __init__(
             self,
-            filename=None,
+            filename = None,
             pathname='logs',
             format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s',
-            stream_enable=True,
-            file_enable=True
+            stream_enable = True,
+            file_enable = True
         ):
         self.time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
@@ -49,11 +49,11 @@ class DemoLogger(object):
 class DemoLoggerTree(object):
     def __init__(
             self,
-            filename=None,
+            filename = None,
             pathname='logs',
-            format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s',
-            stream_enable=True,
-            file_enable=True
+            format = '%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s',
+            stream_enable = True,
+            file_enable = True
         ):
         self.time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
@@ -70,7 +70,7 @@ class DemoLoggerTree(object):
         self._init_node('Lv0.Lv1.Lv2', '[2] %s' % self.format)
 
 
-    def _init_node(self, node, format=None, stream_enable=True, file_enable=True):
+    def _init_node(self, node, format = None, stream_enable = True, file_enable = True):
         logger = logging.getLogger(node)
         logger.setLevel(logging.DEBUG)
 

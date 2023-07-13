@@ -13,7 +13,7 @@ class DemoTracter(object):
     def __init__(self):
         pass
 
-    def contract(self, condir, archive=None, charset='utf-8'):
+    def contract(self, condir, archive = None, charset = 'utf-8'):
         ext = os.path.splitext(archive)[1][1:] if archive else 'zip'
         if ext == '' or not hasattr(self, 'contract_' + ext):
             return False
@@ -26,7 +26,7 @@ class DemoTracter(object):
             return False
         return True
 
-    def extract(self, archive, exdir=None, charset='utf-8'):
+    def extract(self, archive, exdir = None, charset = 'utf-8'):
         ext = os.path.splitext(archive)[1][1:]
         if ext == '' or not hasattr(self, 'extract_' + ext):
             return False
@@ -57,7 +57,7 @@ class DemoTracter(object):
 
     def exe_cmd(self, cmd):
         try:
-            output = subprocess.check_output(cmd, shell='True', stderr=subprocess.STDOUT)
+            output = subprocess.check_output(cmd, shell = 'True', stderr = subprocess.STDOUT)
             returncode = 0
         except subprocess.CalledProcessError as e:
             output = e.output
@@ -117,4 +117,4 @@ class DemoTracter(object):
             exdir_copy = exdir + '_copy'
             os.rename(exdir, exdir_copy)
             shutil.move(os.path.join(exdir_copy, basename), parentname)
-            shutil.rmtree(exdir_copy, ignore_errors=True)
+            shutil.rmtree(exdir_copy, ignore_errors = True)
