@@ -113,7 +113,7 @@ class DemoGitLabBranch(object):
         return self.name
 
 
-class DemoGitLabReader(object):
+class DemoGitLabReporter(object):
     def __init__(self, url, private_token):
         self.url = url
         self.private_token = private_token
@@ -301,5 +301,5 @@ class DemoGitLabReader(object):
 
     
 if __name__ == '__main__':
-    gitlab_reader = DemoGitLabReader('http://127.0.0.1', 'chittleskuny')
+    gitlab_reader = DemoGitLabReporter('http://127.0.0.1', 'chittleskuny')
     gitlab_reader.close()
