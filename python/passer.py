@@ -6,7 +6,7 @@ import string
 import sys
 
 
-class Passer:
+class DemoPasser:
     def __init__(self):
         pass
     
@@ -33,4 +33,4 @@ if __name__ == '__main__':
     if len(sys.argv) < 1:
         exit(1)
     
-    print(Passer().generate(int(sys.argv[1])))
+    print(DemoPasser().generate(int(sys.argv[1])))

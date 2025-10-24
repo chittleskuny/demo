@@ -5,7 +5,7 @@ from PIL import Image
 python3 resizer infile width*height
 '''
 
-class Resizer(object):
+class DemoResizer(object):
     def __init__(self):
         pass
 
@@ -35,5 +35,5 @@ class Resizer(object):
 
 
 if __name__ == '__main__':
-    r = Resizer()
+    r = DemoResizer()
     r.resize_image(sys.argv[1], sys.argv[2])
